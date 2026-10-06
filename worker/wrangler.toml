@@ -1,0 +1,18 @@
+name = "shopflow-worker"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ENVIRONMENT = "development"
+DEMO_SHOP_ID = "shop_demo_001"
+DEMO_SHOP_NAME = "ShopFlow Demo Counter"
+
+account_id = "753b3ba55d6eef6aa6fe7f096f2ca83f"
+
+# Cloudflare D1 Database Binding
+[[d1_databases]]
+binding = "DB"
+database_name = "shopflow-db"
+database_id = "1e889cb3-7f0b-4903-a792-9c1b23c1bb34"
+migrations_dir = "migrations"
