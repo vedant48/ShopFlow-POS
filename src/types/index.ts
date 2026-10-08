@@ -29,11 +29,12 @@ export type ProductCategory =
 
 export interface PriceVariant {
   id: string;
-  name: string; // e.g. "Standard", "Half", "Full", "Small", "Packet", "100g"
-  sellingPrice: number; // in INR ₹
-  mrp?: number; // in INR ₹
+  name: string; // e.g. "Selling Price", "MRP", "Wholesale", "Pack of 10"
+  price: number; // in INR ₹ (rate this variant sells at)
+  sellingPrice?: number; // alias for backwards compatibility
   costPrice?: number; // in INR ₹
-  isDefault?: boolean; // true if this is the base/default variant
+  isDefault?: boolean;
+  type?: 'selling_price' | 'mrp' | 'custom';
 }
 
 export interface Product extends BaseRecord {

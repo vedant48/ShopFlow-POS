@@ -71,7 +71,7 @@ export const CurrentSaleTray: React.FC<CurrentSaleTrayProps> = ({
       <div className="p-3 space-y-2.5 max-h-60 sm:max-h-80 overflow-y-auto overscroll-contain divide-y divide-slate-100">
         {cart.map((item) => {
           const itemKey = `${item.product.id}_${item.selectedVariant?.id || 'base'}`;
-          const effectivePrice = item.selectedVariant?.sellingPrice ?? item.product.sellingPrice;
+          const effectivePrice = item.selectedVariant?.price ?? item.selectedVariant?.sellingPrice ?? item.product.sellingPrice;
           const isCustomVariant = item.selectedVariant && !item.selectedVariant.isDefault;
 
           return (

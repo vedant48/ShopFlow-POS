@@ -15,7 +15,7 @@ import { useCategories } from '../hooks/useCategories';
 import { useBrands } from '../hooks/useBrands';
 import { getCategoryEmoji } from '../constants/categoryIcons';
 import { Badge } from '../components/Badge';
-import { formatCurrency } from '../lib/utils';
+import { formatCurrency, getProductVariants } from '../lib/utils';
 import type { Product, Category, Brand } from '../types';
 import {
   Plus,
@@ -202,6 +202,7 @@ export const InventoryPage: React.FC = () => {
     const productCost = product.costPrice || 0;
     const itemStockValue = Math.max(0, product.stock) * productCost;
     const productBrand = product.brandId ? brandMap.get(product.brandId) : null;
+    const variants = getProductVariants(product);
 
     return (
       <div
@@ -227,9 +228,9 @@ export const InventoryPage: React.FC = () => {
                     Archived
                   </span>
                 )}
-                {product.priceVariants && product.priceVariants.length > 1 && (
+                {variants.length > 1 && (
                   <span className="text-[10px] px-1.5 py-0.2 bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold rounded">
-                    {product.priceVariants.length} variants
+                    {variants.length} price options
                   </span>
                 )}
                 {product.isFavorite && (

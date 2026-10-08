@@ -73,20 +73,7 @@ export const inventoryService = {
     }
 
     const mrp = productData.mrp !== undefined && !isNaN(productData.mrp) ? productData.mrp : productData.sellingPrice;
-
-    // Ensure default price variant is always present
-    const defaultVariant = {
-      id: generateId('pv'),
-      name: 'Standard',
-      sellingPrice: productData.sellingPrice,
-      mrp: mrp,
-      costPrice: productData.costPrice,
-      isDefault: true,
-    };
-
-    const priceVariants = productData.priceVariants && productData.priceVariants.length > 0
-      ? productData.priceVariants
-      : [defaultVariant];
+    const priceVariants = productData.priceVariants || [];
 
     const newProduct: Product = {
       ...productData,

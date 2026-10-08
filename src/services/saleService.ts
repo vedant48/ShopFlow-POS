@@ -47,7 +47,7 @@ export const saleService = {
 
     // Exact integer-safe calculation: sum of (effective price * quantity)
     const totalAmount = input.items.reduce((sum, item) => {
-      const price = item.selectedVariant?.sellingPrice ?? item.product.sellingPrice;
+      const price = item.selectedVariant?.price ?? item.selectedVariant?.sellingPrice ?? item.product.sellingPrice;
       return sum + Math.round(price * item.quantity);
     }, 0);
     const itemCount = input.items.reduce((sum, item) => sum + item.quantity, 0);
@@ -118,7 +118,7 @@ export const saleService = {
         // Create SaleItems and decrement inventory for each item
         for (const cartItem of input.items) {
           const itemId = generateId('item');
-          const itemPrice = cartItem.selectedVariant?.sellingPrice ?? cartItem.product.sellingPrice;
+          const itemPrice = cartItem.selectedVariant?.price ?? cartItem.selectedVariant?.sellingPrice ?? cartItem.product.sellingPrice;
           const itemCost = cartItem.selectedVariant?.costPrice ?? cartItem.product.costPrice ?? 0;
           const itemTotal = Math.round(itemPrice * cartItem.quantity);
           const itemName = cartItem.selectedVariant && !cartItem.selectedVariant.isDefault

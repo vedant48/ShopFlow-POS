@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal } from '../../components/Modal';
-import { formatCurrency } from '../../lib/utils';
+import { formatCurrency, getProductVariants } from '../../lib/utils';
 import type { Product, PriceVariant } from '../../types';
 import { Plus } from 'lucide-react';
 
@@ -19,17 +19,7 @@ export const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
 }) => {
   if (!product) return null;
 
-  const variants = product.priceVariants && product.priceVariants.length > 0
-    ? product.priceVariants
-    : [
-        {
-          id: `pv_${product.id}_def`,
-          name: 'Standard',
-          sellingPrice: product.sellingPrice,
-          mrp: product.mrp ?? product.sellingPrice,
-          isDefault: true,
-        },
-      ];
+  const variants = getProductVariants(product);
 
   const handleSelect = (variant: PriceVariant) => {
     onSelectVariant(product, variant);
@@ -41,17 +31,19 @@ export const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title={product.name}
-      subtitle="Select a price or size variant"
+      subtitle="Select price option (Selling Price, MRP, or Custom Variant)"
     >
       <div className="space-y-2.5">
         <div className="flex items-center justify-between text-xs text-slate-500 font-semibold px-1">
-          <span>Available Variants ({variants.length})</span>
+          <span>Available Price Options ({variants.length})</span>
           <span>Stock: {product.stock}</span>
         </div>
 
         <div className="space-y-2 max-h-[50vh] overflow-y-auto overscroll-contain">
           {variants.map((variant) => {
-            const hasMrp = variant.mrp && variant.mrp > variant.sellingPrice;
+            const isMrp = variant.type === 'mrp';
+            const isSellingPrice = variant.type === 'selling_price';
+            const price = variant.price ?? variant.sellingPrice ?? product.sellingPrice;
 
             return (
               <button
@@ -66,19 +58,24 @@ export const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
                       {variant.name}
                     </span>
                     {variant.isDefault && (
-                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-200 text-slate-600">
-                        Base
+                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-blue-100 text-blue-800">
+                        Default
+                      </span>
+                    )}
+                    {isMrp && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-purple-100 text-purple-800">
+                        Printed MRP
                       </span>
                     )}
                   </div>
 
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-base font-black text-blue-600">
-                      {formatCurrency(variant.sellingPrice)}
+                      {formatCurrency(price)}
                     </span>
-                    {hasMrp && (
+                    {isSellingPrice && product.mrp && product.mrp > price && (
                       <span className="text-xs font-semibold text-slate-400 line-through">
-                        MRP {formatCurrency(variant.mrp!)}
+                        MRP {formatCurrency(product.mrp)}
                       </span>
                     )}
                   </div>

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import type { Product, CartItem, PriceVariant } from '../../types';
-import { formatCurrency } from '../../lib/utils';
+import { formatCurrency, getProductVariants } from '../../lib/utils';
 import { Search, X, Star, Zap, Clock, ArrowLeft, ChevronRight } from 'lucide-react';
 import { useQuickItems } from '../../hooks/useQuickItems';
 import { useCategories } from '../../hooks/useCategories';
@@ -177,10 +177,11 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
 
   const handleProductClick = (product: Product) => {
     if (product.stock <= 0) return;
-    if (product.priceVariants && product.priceVariants.length > 1) {
+    const variants = getProductVariants(product);
+    if (variants.length > 1) {
       setVariantModalProduct(product);
     } else {
-      onAddToCart(product);
+      onAddToCart(product, variants[0]);
     }
   };
 
@@ -190,7 +191,8 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
     const isLowStock = product.stock <= product.minStock && product.stock > 0;
     const isOutOfStock = product.stock <= 0;
     const isFav = product.isFavorite === true;
-    const hasVariants = product.priceVariants && product.priceVariants.length > 1;
+    const variants = getProductVariants(product);
+    const hasMultipleVariants = variants.length > 1;
 
     // Resolve brand label for context if available
     const productBrand = product.brandId ? brandMap.get(product.brandId) : null;
@@ -273,9 +275,9 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
                 </span>
               )}
             </div>
-            {hasVariants && (
+            {hasMultipleVariants && (
               <span className="text-[10px] font-bold text-indigo-600 block mt-0.5">
-                {product.priceVariants!.length} variants
+                {variants.length} price options
               </span>
             )}
           </div>

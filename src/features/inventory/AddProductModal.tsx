@@ -20,8 +20,7 @@ interface AddProductModalProps {
 interface CustomVariantFormItem {
   id: string;
   name: string;
-  sellingPrice: string;
-  mrp: string;
+  price: string;
 }
 
 export const AddProductModal: React.FC<AddProductModalProps> = ({
@@ -30,7 +29,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
   onSuccess,
   defaultCategoryId,
   defaultBrandId,
-}) => {
+  }) => {
   const { categories } = useCategories({ activeOnly: true });
 
   const [name, setName] = useState('');
@@ -46,8 +45,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
   const [barcode, setBarcode] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Price Variants State
-  const [baseVariantName, setBaseVariantName] = useState('Standard');
+  // Customizable Variants State
   const [customVariants, setCustomVariants] = useState<CustomVariantFormItem[]>([]);
 
   // Inline Add Brand state (Section 8: preserve entered product fields, create brand inline)
@@ -108,8 +106,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
       {
         id: generateId('pv'),
         name: '',
-        sellingPrice: '',
-        mrp: '',
+        price: '',
       },
     ]);
   };
@@ -118,7 +115,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
     setCustomVariants((prev) => prev.filter((v) => v.id !== id));
   };
 
-  const handleUpdateCustomVariant = (id: string, field: 'name' | 'sellingPrice' | 'mrp', value: string) => {
+  const handleUpdateCustomVariant = (id: string, field: 'name' | 'price', value: string) => {
     setCustomVariants((prev) =>
       prev.map((v) => (v.id === id ? { ...v, [field]: value } : v))
     );
@@ -138,30 +135,21 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
 
       const selectedCat = categories.find((c) => c.id === selectedCategoryId);
 
-      // Build price variants list (Base variant + custom variants)
-      const allVariants: PriceVariant[] = [
-        {
-          id: generateId('pv'),
-          name: baseVariantName.trim() || 'Standard',
-          sellingPrice: sell,
-          mrp: mrpVal,
-          costPrice: cost,
-          isDefault: true,
-        },
-        ...customVariants
-          .filter((v) => v.name.trim() && v.sellingPrice)
-          .map((v) => {
-            const vSell = parseFloat(v.sellingPrice) || sell;
-            return {
-              id: v.id || generateId('pv'),
-              name: v.name.trim(),
-              sellingPrice: vSell,
-              mrp: parseFloat(v.mrp) || vSell,
-              costPrice: cost,
-              isDefault: false,
-            };
-          }),
-      ];
+      // Customizable price variants
+      const customPriceVariants: PriceVariant[] = customVariants
+        .filter((v) => v.name.trim() && v.price)
+        .map((v) => {
+          const vPrice = parseFloat(v.price) || sell;
+          return {
+            id: v.id || generateId('pv'),
+            name: v.name.trim(),
+            price: vPrice,
+            sellingPrice: vPrice,
+            costPrice: cost,
+            isDefault: false,
+            type: 'custom',
+          };
+        });
 
       await inventoryService.addProduct({
         name: name.trim(),
@@ -171,7 +159,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
         sellingPrice: sell,
         mrp: mrpVal,
         costPrice: cost,
-        priceVariants: allVariants,
+        priceVariants: customPriceVariants,
         stock: initialStock,
         minStock: minimumStock,
         isFavorite,
@@ -185,7 +173,6 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
       setSellingPrice('');
       setMrp('');
       setCostPrice('');
-      setBaseVariantName('Standard');
       setCustomVariants([]);
       setStock('20');
       setMinStock('5');
@@ -374,97 +361,112 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
         </div>
 
         {/* Price Variants Section */}
-        <div className="p-3 bg-slate-50 border border-slate-200/90 rounded-2xl space-y-2.5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <Layers className="w-4 h-4 text-blue-600" />
-              <span className="text-xs font-black text-slate-800">
-                Price Variants ({1 + customVariants.length})
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={handleAddCustomVariant}
-              className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer bg-white border border-blue-200 px-2 py-1 rounded-lg hover:bg-blue-50"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Variant</span>
-            </button>
-          </div>
+        {(() => {
+          const sellVal = parseFloat(sellingPrice) || 0;
+          const mrpVal = parseFloat(mrp) || sellVal;
+          const isDual = sellVal !== mrpVal;
+          const totalVariantCount = (isDual ? 2 : 1) + customVariants.length;
 
-          {/* Base Variant (Always Present) */}
-          <div className="p-2.5 bg-white border border-slate-200 rounded-xl flex items-center justify-between gap-2 shadow-2xs">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 shrink-0">
-                Default
-              </span>
-              <input
-                type="text"
-                value={baseVariantName}
-                onChange={(e) => setBaseVariantName(e.target.value)}
-                placeholder="Standard / Regular"
-                className="text-xs font-bold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 focus:outline-none px-1 py-0.5 flex-1 min-w-[70px]"
-              />
-            </div>
-            <div className="flex items-center gap-3 text-xs shrink-0">
-              <span className="font-extrabold text-blue-700">
-                Selling: ₹{sellingPrice || 0}
-              </span>
-              <span className="text-slate-500 font-semibold">
-                MRP: ₹{mrp || sellingPrice || 0}
-              </span>
-            </div>
-          </div>
-
-          {/* Custom Added Variants */}
-          {customVariants.map((v, i) => (
-            <div key={v.id} className="p-2.5 bg-white border border-slate-200 rounded-xl space-y-2 shadow-2xs">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] font-bold text-slate-500">
-                  Variant #{i + 2}
-                </span>
+          return (
+            <div className="p-3 bg-slate-50 border border-slate-200/90 rounded-2xl space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Layers className="w-4 h-4 text-blue-600" />
+                  <span className="text-xs font-black text-slate-800">
+                    Price Variants ({totalVariantCount})
+                  </span>
+                </div>
                 <button
                   type="button"
-                  onClick={() => handleRemoveCustomVariant(v.id)}
-                  className="text-slate-400 hover:text-rose-600 p-1 rounded transition-colors cursor-pointer"
-                  title="Remove variant"
+                  onClick={handleAddCustomVariant}
+                  className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer bg-white border border-blue-200 px-2 py-1 rounded-lg hover:bg-blue-50"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Variant</span>
                 </button>
               </div>
 
-              <div className="grid grid-cols-3 gap-2">
-                <div className="col-span-1">
-                  <input
-                    type="text"
-                    placeholder="e.g. Half / Packet"
-                    value={v.name}
-                    onChange={(e) => handleUpdateCustomVariant(v.id, 'name', e.target.value)}
-                    className="w-full h-8 px-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <input
-                    type="number"
-                    placeholder="Sell ₹"
-                    value={v.sellingPrice}
-                    onChange={(e) => handleUpdateCustomVariant(v.id, 'sellingPrice', e.target.value)}
-                    className="w-full h-8 px-2 text-xs font-bold text-blue-700 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <input
-                    type="number"
-                    placeholder="MRP ₹"
-                    value={v.mrp}
-                    onChange={(e) => handleUpdateCustomVariant(v.id, 'mrp', e.target.value)}
-                    className="w-full h-8 px-2 text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
+              {/* Built-in Variants */}
+              <div className="space-y-1.5">
+                {isDual ? (
+                  <>
+                    <div className="p-2 bg-white border border-slate-200 rounded-xl flex items-center justify-between shadow-2xs">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-100 text-blue-800">
+                          Option 1
+                        </span>
+                        <span className="text-xs font-bold text-slate-800">Selling Price</span>
+                      </div>
+                      <span className="text-xs font-extrabold text-blue-700">₹{sellVal}</span>
+                    </div>
+
+                    <div className="p-2 bg-white border border-slate-200 rounded-xl flex items-center justify-between shadow-2xs">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-100 text-purple-800">
+                          Option 2
+                        </span>
+                        <span className="text-xs font-bold text-slate-800">MRP</span>
+                      </div>
+                      <span className="text-xs font-extrabold text-purple-700">₹{mrpVal}</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="p-2 bg-white border border-slate-200 rounded-xl flex items-center justify-between shadow-2xs">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-800">
+                        Base
+                      </span>
+                      <span className="text-xs font-bold text-slate-800">Selling Price & MRP (Equal)</span>
+                    </div>
+                    <span className="text-xs font-extrabold text-blue-700">₹{sellVal}</span>
+                  </div>
+                )}
               </div>
+
+              {/* Custom Variants */}
+              {customVariants.map((v, i) => (
+                <div key={v.id} className="p-2.5 bg-white border border-slate-200 rounded-xl space-y-2 shadow-2xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-bold text-slate-500">
+                      Custom Variant #{i + 1}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveCustomVariant(v.id)}
+                      className="text-slate-400 hover:text-rose-600 p-1 rounded transition-colors cursor-pointer"
+                      title="Remove variant"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <input
+                        type="text"
+                        placeholder="e.g. Wholesale, Loose, Pack of 5"
+                        value={v.name}
+                        onChange={(e) => handleUpdateCustomVariant(v.id, 'name', e.target.value)}
+                        className="w-full h-8 px-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        placeholder="Price (₹)"
+                        value={v.price}
+                        onChange={(e) => handleUpdateCustomVariant(v.id, 'price', e.target.value)}
+                        className="w-full h-8 px-2 text-xs font-bold text-blue-700 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          );
+        })()}
 
         {/* Stock & Minimum Stock */}
         <div className="grid grid-cols-2 gap-3">

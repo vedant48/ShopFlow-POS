@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { Product, CartItem, PriceVariant } from '../types';
 import { CartContext } from './cartTypes';
+import { getProductVariants } from '../lib/utils';
 
 const CART_SESSION_KEY = 'shopflow_active_cart_v1';
 
@@ -54,8 +55,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
 
-    // If no variant passed, use default variant if available
-    const effectiveVariant = variant || (product.priceVariants?.find((v) => v.isDefault) ?? product.priceVariants?.[0]);
+    // If no variant passed, use primary variant (Selling Price)
+    const effectiveVariant = variant || getProductVariants(product)[0];
 
     setCart((prev) => {
       const existing = prev.find(
@@ -154,7 +155,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Single source of truth calculation: quantity * (variant price or product sellingPrice)
   const subtotal = cart.reduce(
     (sum, item) => {
-      const price = item.selectedVariant?.sellingPrice ?? item.product.sellingPrice;
+      const price = item.selectedVariant?.price ?? item.selectedVariant?.sellingPrice ?? item.product.sellingPrice;
       return sum + Math.round(price * item.quantity);
     },
     0
