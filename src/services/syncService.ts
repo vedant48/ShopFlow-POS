@@ -3,8 +3,8 @@ import type { SyncQueueItem, SyncOperation, SyncStatus } from '../types';
 import { generateId } from '../lib/utils';
 import { api, DEFAULT_DEMO_SHOP_ID } from '../lib/api';
 
-// Exponential backoff intervals in milliseconds: 5s, 15s, 30s, 1m, 5m (Section 35)
-const BACKOFF_INTERVALS = [5000, 15000, 30000, 60000, 300000];
+// Fast local-first retry intervals: 1s, 2s, 5s (capped at 5s max, no 30s/60s stalls)
+const BACKOFF_INTERVALS = [1000, 2000, 5000];
 
 export interface SyncStats {
   pendingCount: number;
@@ -215,11 +215,12 @@ class SyncService {
     this.isSyncing = true;
     this.notify();
 
+    let itemsToSync: SyncQueueItem[] = [];
+
     try {
       const currentShopId = targetShopId || api.getShopId();
 
       // 1. Load pending and failed events strictly for active shop (Section 22, 25)
-      let itemsToSync: SyncQueueItem[] = [];
       if (force) {
         itemsToSync = await db.syncQueue
           .where('status')
@@ -227,10 +228,11 @@ class SyncService {
           .filter((item) => (item.shopId || DEFAULT_DEMO_SHOP_ID) === currentShopId)
           .toArray();
       } else {
+        const maxAutoRetries = 3;
         itemsToSync = await db.syncQueue
           .where('status')
           .anyOf('PENDING', 'FAILED')
-          .filter((item) => (item.shopId || DEFAULT_DEMO_SHOP_ID) === currentShopId)
+          .filter((item) => (item.shopId || DEFAULT_DEMO_SHOP_ID) === currentShopId && (item.attempts || 0) <= maxAutoRetries)
           .toArray();
       }
 
@@ -328,7 +330,31 @@ class SyncService {
       console.warn('Sync connection error (local data remains 100% safe):', err?.message);
       this.lastError = err?.message || 'Network error';
 
-      // Revert items from SYNCING back to PENDING so they are not lost
+      const isAuthError =
+        err?.message?.includes('401') ||
+        err?.message?.includes('Unauthorized') ||
+        err?.message?.includes('not found') ||
+        err?.message?.includes('Authentication required');
+
+      if (isAuthError) {
+        // If authentication failed (e.g. wiped shop or invalid session), mark items
+        // as FAILED with error message instead of scheduling a backoff loop.
+        try {
+          await db.syncQueue
+            .where('status')
+            .equals('SYNCING')
+            .modify({
+              status: 'FAILED' as SyncStatus,
+              errorMessage: err.message,
+              updatedAt: new Date().toISOString(),
+            });
+        } catch {
+          // ignore
+        }
+        return { success: false, synced: 0, failed: itemsToSync.length, error: err?.message };
+      }
+
+      // Revert items from SYNCING back to PENDING so they are not lost on network blips
       try {
         await db.syncQueue
           .where('status')
