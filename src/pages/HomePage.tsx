@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useProducts, useCustomers, useDashboardStats } from '../hooks/useShopData';
+import React, { useState, useRef } from 'react';
+import { useProducts, useCustomers, useDashboardStats, useOpenOrders } from '../hooks/useShopData';
 import { useCart } from '../hooks/useCart';
 import { QuickSaleGrid } from '../features/sales/QuickSaleGrid';
 import { CurrentSaleTray } from '../features/sales/CurrentSaleTray';
@@ -10,9 +10,14 @@ import { SaleDetailModal } from '../features/sales/SaleDetailModal';
 import { AddStockModal } from '../features/inventory/AddStockModal';
 import { SaleToast } from '../features/sales/SaleToast';
 import { MobileCartBottomBar } from '../features/sales/MobileCartBottomBar';
+import { HoldOrderModal } from '../features/sales/HoldOrderModal';
+import { OpenOrdersModal } from '../features/sales/OpenOrdersModal';
+import { OpenOrderDetailModal } from '../features/sales/OpenOrderDetailModal';
+import { OpenOrderCheckoutModal } from '../features/sales/OpenOrderCheckoutModal';
 import { saleService } from '../services/saleService';
+import { openOrderService } from '../services/openOrderService';
 import { formatCurrency } from '../lib/utils';
-import type { Sale, Customer, Product } from '../types';
+import type { Sale, Customer, Product, OpenOrder, CartItem, PriceVariant } from '../types';
 import {
   Banknote,
   QrCode,
@@ -46,6 +51,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
   const { products, isLoading: productsLoading } = useProducts();
   const { customers } = useCustomers();
   const { stats } = useDashboardStats();
+  const { openOrdersCount } = useOpenOrders();
 
   // Unified Cart Hook with stock limits & integer calculations
   const {
@@ -68,7 +74,16 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
   const [selectedActivitySale, setSelectedActivitySale] = useState<Sale | null>(null);
   const [restockingProduct, setRestockingProduct] = useState<Product | null>(null);
   const [activeSaleToast, setActiveSaleToast] = useState<Sale | null>(null);
+  const [heldOrderToast, setHeldOrderToast] = useState<{ name: string; total: number; order: OpenOrder } | null>(null);
   const [greeting] = useState<string>(getGreeting);
+
+  // Open Orders State
+  const [isOpenOrdersModalOpen, setIsOpenOrdersModalOpen] = useState(false);
+  const [isHoldOrderModalOpen, setIsHoldOrderModalOpen] = useState(false);
+  const [selectedDetailOrder, setSelectedDetailOrder] = useState<OpenOrder | null>(null);
+  const [checkoutOrder, setCheckoutOrder] = useState<OpenOrder | null>(null);
+  const [activeEditingOrder, setActiveEditingOrder] = useState<OpenOrder | null>(null);
+  const stashedNormalCartRef = useRef<CartItem[]>([]);
 
   // When PAID is tapped in cart tray, open the lightweight payment method selector
   const handleOpenPaidModal = () => {
@@ -143,6 +158,164 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
   // Collapsible stats on mobile to preserve vertical screen space for counter
   const [isStatsExpanded, setIsStatsExpanded] = useState(false);
 
+  // Open Hold Order Modal
+  const handleOpenHoldModal = () => {
+    if (cart.length === 0 || isProcessingSale) return;
+    setIsHoldOrderModalOpen(true);
+  };
+
+  // Successfully put order on hold
+  const handleHoldOrderSuccess = (order: OpenOrder) => {
+    clearCart();
+    setIsHoldOrderModalOpen(false);
+    setHeldOrderToast({
+      name: order.temporaryCustomerName || 'Customer',
+      total: order.totalAmount,
+      order,
+    });
+  };
+
+  React.useEffect(() => {
+    if (heldOrderToast) {
+      const timer = setTimeout(() => setHeldOrderToast(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [heldOrderToast]);
+
+  // Add more items to an existing Open Order
+  const handleAddMoreItems = async (order: OpenOrder) => {
+    // 1. Stash current normal cart if not already editing
+    if (!activeEditingOrder) {
+      stashedNormalCartRef.current = [...cart];
+    }
+
+    // 2. Fetch order items and restore into cart
+    const orderData = await openOrderService.getOpenOrderWithItems(order.id);
+    if (!orderData) return;
+
+    const orderCartItems: CartItem[] = orderData.items.map((oi) => {
+      const prod: Product = products.find((p) => p.id === oi.productId) || {
+        id: oi.productId,
+        shopId: oi.shopId,
+        name: oi.productName,
+        emoji: oi.productEmoji,
+        sellingPrice: oi.unitPrice,
+        costPrice: 0,
+        stock: 999,
+        minStock: 0,
+        active: true,
+        category: 'General',
+        createdAt: oi.createdAt,
+        updatedAt: oi.updatedAt,
+      };
+
+      const variant: PriceVariant | undefined = oi.variantId
+        ? {
+            id: oi.variantId,
+            name: oi.variantName || 'Variant',
+            price: oi.unitPrice,
+            sellingPrice: oi.unitPrice,
+            isDefault: false,
+          }
+        : undefined;
+
+      return {
+        product: prod,
+        quantity: oi.quantity,
+        selectedVariant: variant,
+      };
+    });
+
+    restoreCart(orderCartItems);
+    setActiveEditingOrder(orderData.order);
+  };
+
+  // Save and return to timeline view
+  const handleSaveAndReturnToOrder = async () => {
+    if (!activeEditingOrder) return;
+    const currentOrderId = activeEditingOrder.id;
+    setActiveEditingOrder(null);
+
+    // Restore stashed normal cart
+    restoreCart(stashedNormalCartRef.current);
+    stashedNormalCartRef.current = [];
+
+    // Reopen detail modal for the updated order
+    const updated = await openOrderService.getOpenOrderWithItems(currentOrderId);
+    if (updated) {
+      setSelectedDetailOrder(updated.order);
+    }
+  };
+
+  // Wrapped cart handlers for auto-save in Open Order mode
+  const handleAddToCart = async (product: Product, variant?: PriceVariant) => {
+    addToCart(product, variant);
+    if (activeEditingOrder) {
+      try {
+        await openOrderService.addItemToOrder(activeEditingOrder.id, product, 1, variant);
+      } catch (err) {
+        console.error('Failed to auto-save item to open order', err);
+      }
+    }
+  };
+
+  const handleUpdateQuantity = async (productId: string, delta: number, variantId?: string) => {
+    if (activeEditingOrder) {
+      const currentItem = cart.find(
+        (i) => i.product.id === productId && (variantId ? i.selectedVariant?.id === variantId : !i.selectedVariant?.id)
+      );
+      if (currentItem) {
+        const newQty = currentItem.quantity + delta;
+        try {
+          const orderData = await openOrderService.getOpenOrderWithItems(activeEditingOrder.id);
+          const orderItem = orderData?.items.find(
+            (oi) => oi.productId === productId && (variantId ? oi.variantId === variantId : !oi.variantId)
+          );
+          if (orderItem) {
+            if (newQty <= 0) {
+              await openOrderService.removeItemFromOrder(activeEditingOrder.id, orderItem.id);
+            } else {
+              await openOrderService.updateItemQuantity(activeEditingOrder.id, orderItem.id, newQty);
+            }
+          }
+        } catch (err) {
+          console.error('Failed to update open order item quantity', err);
+        }
+      }
+    }
+    updateQuantity(productId, delta, variantId);
+  };
+
+  const handleRemoveItem = async (productId: string, variantId?: string) => {
+    if (activeEditingOrder) {
+      try {
+        const orderData = await openOrderService.getOpenOrderWithItems(activeEditingOrder.id);
+        const orderItem = orderData?.items.find(
+          (oi) => oi.productId === productId && (variantId ? oi.variantId === variantId : !oi.variantId)
+        );
+        if (orderItem) {
+          await openOrderService.removeItemFromOrder(activeEditingOrder.id, orderItem.id);
+        }
+      } catch (err) {
+        console.error('Failed to remove open order item', err);
+      }
+    }
+    removeItem(productId, variantId);
+  };
+
+  // Handle successful checkout of Open Order
+  const handleOpenOrderCheckoutSuccess = (sale: Sale) => {
+    if (activeEditingOrder) {
+      setActiveEditingOrder(null);
+      clearCart();
+      restoreCart(stashedNormalCartRef.current);
+      stashedNormalCartRef.current = [];
+    }
+    setSelectedDetailOrder(null);
+    setCheckoutOrder(null);
+    setActiveSaleToast(sale);
+  };
+
   // Section 13: Enter keyboard shortcut opens payment method when cart has items
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -152,17 +325,35 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
         !isPaymentMethodModalOpen &&
         !isUdhaarModalOpen &&
         !isExpenseModalOpen &&
+        !isHoldOrderModalOpen &&
+        !isOpenOrdersModalOpen &&
+        !selectedDetailOrder &&
+        !checkoutOrder &&
         document.activeElement?.tagName !== 'INPUT' &&
         document.activeElement?.tagName !== 'TEXTAREA'
       ) {
         e.preventDefault();
-        handleOpenPaidModal();
+        if (activeEditingOrder) {
+          handleSaveAndReturnToOrder();
+        } else {
+          handleOpenPaidModal();
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [cart.length, isPaymentMethodModalOpen, isUdhaarModalOpen, isExpenseModalOpen]);
+  }, [
+    cart.length,
+    isPaymentMethodModalOpen,
+    isUdhaarModalOpen,
+    isExpenseModalOpen,
+    isHoldOrderModalOpen,
+    isOpenOrdersModalOpen,
+    selectedDetailOrder,
+    checkoutOrder,
+    activeEditingOrder,
+  ]);
 
   return (
     <div className="space-y-4 pb-20 lg:pb-12">
@@ -355,11 +546,54 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
             </div>
           )}
 
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
-                Quick Sale
-              </h2>
+          <div className="space-y-3">
+            {/* Visual Banner when Editing Open Order */}
+            {activeEditingOrder && (
+              <div className="p-3.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-2xl shadow-sm flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse shrink-0" />
+                  <div className="min-w-0">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-100 block">
+                      Active Timeline Mode
+                    </span>
+                    <span className="text-sm font-black truncate block">
+                      Adding to: {activeEditingOrder.temporaryCustomerName || 'Customer'}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleSaveAndReturnToOrder}
+                  className="px-3.5 py-1.5 bg-white hover:bg-amber-50 text-amber-950 font-black text-xs rounded-xl shadow-xs transition-colors cursor-pointer shrink-0"
+                >
+                  Save & Return
+                </button>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                  Quick Sale
+                </h2>
+
+                {/* Open Orders prominent counter badge */}
+                <button
+                  type="button"
+                  onClick={() => setIsOpenOrdersModalOpen(true)}
+                  className="px-2.5 sm:px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 font-black text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95"
+                >
+                  <Clock className="w-3.5 h-3.5 text-amber-600" />
+                  <span>OPEN ORDERS</span>
+                  {openOrdersCount > 0 && (
+                    <span className="w-5 h-5 rounded-full bg-amber-500 text-white text-[11px] font-black flex items-center justify-center">
+                      {openOrdersCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+
               <span className="text-xs text-slate-500 font-semibold">
                 Tap product to add
               </span>
@@ -373,7 +607,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
               <QuickSaleGrid
                 products={products}
                 cart={cart}
-                onAddToCart={addToCart}
+                onAddToCart={handleAddToCart}
               />
             )}
           </div>
@@ -546,11 +780,14 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
             cart={cart}
             subtotal={subtotal}
             totalItems={totalItems}
-            onUpdateQuantity={updateQuantity}
-            onRemoveItem={removeItem}
+            onUpdateQuantity={handleUpdateQuantity}
+            onRemoveItem={handleRemoveItem}
             onClearCart={clearCart}
             onPaidSale={handleOpenPaidModal}
             onUdhaarSale={handleOpenUdhaarModal}
+            onHoldOrder={handleOpenHoldModal}
+            activeEditingOrderName={activeEditingOrder ? (activeEditingOrder.temporaryCustomerName || 'Customer') : null}
+            onSaveAndReturnOrder={handleSaveAndReturnToOrder}
             isProcessing={isProcessingSale}
           />
         </div>
@@ -561,11 +798,14 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
         cart={cart}
         subtotal={subtotal}
         totalItems={totalItems}
-        onUpdateQuantity={updateQuantity}
-        onRemoveItem={removeItem}
+        onUpdateQuantity={handleUpdateQuantity}
+        onRemoveItem={handleRemoveItem}
         onClearCart={clearCart}
         onPaidSale={handleOpenPaidModal}
         onUdhaarSale={handleOpenUdhaarModal}
+        onHoldOrder={handleOpenHoldModal}
+        activeEditingOrderName={activeEditingOrder ? (activeEditingOrder.temporaryCustomerName || 'Customer') : null}
+        onSaveAndReturnOrder={handleSaveAndReturnToOrder}
         isProcessing={isProcessingSale}
       />
 
@@ -602,6 +842,81 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
         isOpen={!!restockingProduct}
         onClose={() => setRestockingProduct(null)}
       />
+
+      {/* Open Orders Modals */}
+      <HoldOrderModal
+        isOpen={isHoldOrderModalOpen}
+        onClose={() => setIsHoldOrderModalOpen(false)}
+        cart={cart}
+        subtotal={subtotal}
+        totalItems={totalItems}
+        onSuccess={handleHoldOrderSuccess}
+      />
+
+      <OpenOrdersModal
+        isOpen={isOpenOrdersModalOpen}
+        onClose={() => setIsOpenOrdersModalOpen(false)}
+        onSelectOrder={(order) => setSelectedDetailOrder(order)}
+        onStartNewOrder={() => {
+          if (activeEditingOrder) {
+            handleSaveAndReturnToOrder();
+          }
+          if (cart.length > 0) {
+            setIsHoldOrderModalOpen(true);
+          }
+        }}
+      />
+
+      <OpenOrderDetailModal
+        order={selectedDetailOrder}
+        isOpen={!!selectedDetailOrder}
+        onClose={() => setSelectedDetailOrder(null)}
+        onAddMoreItems={handleAddMoreItems}
+        onCheckout={(order) => setCheckoutOrder(order)}
+      />
+
+      <OpenOrderCheckoutModal
+        order={checkoutOrder}
+        isOpen={!!checkoutOrder}
+        onClose={() => setCheckoutOrder(null)}
+        onSuccess={handleOpenOrderCheckoutSuccess}
+      />
+
+      {/* Held Order Floating Notification */}
+      {heldOrderToast && (
+        <div className="fixed bottom-20 lg:bottom-6 left-4 right-4 sm:left-auto sm:right-6 sm:w-96 z-50 p-4 bg-amber-500 text-white rounded-2xl shadow-xl flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Clock className="w-5 h-5 shrink-0" />
+            <div className="min-w-0">
+              <span className="text-[10px] font-black uppercase tracking-wider text-amber-100 block">
+                Order Put On Hold
+              </span>
+              <span className="text-sm font-black truncate block">
+                {heldOrderToast.name} · {formatCurrency(heldOrderToast.total)}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedDetailOrder(heldOrderToast.order);
+                setHeldOrderToast(null);
+              }}
+              className="px-2.5 py-1 bg-white hover:bg-amber-50 text-amber-950 font-black text-xs rounded-xl transition-colors cursor-pointer"
+            >
+              VIEW
+            </button>
+            <button
+              type="button"
+              onClick={() => setHeldOrderToast(null)}
+              className="text-amber-100 hover:text-white font-black text-sm p-1 cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

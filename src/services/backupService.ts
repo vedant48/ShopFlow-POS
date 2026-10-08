@@ -11,6 +11,8 @@ import type {
   Supplier,
   InventoryMovement,
   Expense,
+  OpenOrder,
+  OpenOrderItem,
 } from '../types';
 import { DEFAULT_DEMO_SHOP_ID } from '../lib/api';
 
@@ -26,6 +28,8 @@ export interface ShopFlowBackupData {
   suppliers?: Supplier[];
   inventoryMovements: InventoryMovement[];
   expenses: Expense[];
+  openOrders?: OpenOrder[];
+  openOrderItems?: OpenOrderItem[];
 }
 
 export interface ShopFlowBackup {
@@ -77,10 +81,7 @@ class BackupService {
    * Export the authenticated shop's data into a clean, versioned JSON backup file.
    * Strictly omits sensitive authentication credentials (PIN, tokens, session secrets).
    */
-  async exportBackup(
-    shopId: string,
-    shopName: string
-  ): Promise<{ success: boolean; filename: string; counts: Record<string, number> }> {
+  async createBackupPayload(shopId?: string, shopName?: string): Promise<ShopFlowBackup> {
     const targetShopId = shopId || DEFAULT_DEMO_SHOP_ID;
 
     // Fetch all entities for this shop
@@ -96,6 +97,8 @@ class BackupService {
       suppliers,
       inventoryMovements,
       expenses,
+      openOrders,
+      openOrderItems,
     ] = await Promise.all([
       db.categories.filter((c) => (c.shopId || DEFAULT_DEMO_SHOP_ID) === targetShopId).toArray(),
       db.brands.filter((b) => (b.shopId || DEFAULT_DEMO_SHOP_ID) === targetShopId).toArray(),
@@ -108,9 +111,11 @@ class BackupService {
       db.suppliers.filter((s) => (s.shopId || DEFAULT_DEMO_SHOP_ID) === targetShopId).toArray(),
       db.inventoryMovements.filter((im) => (im.shopId || DEFAULT_DEMO_SHOP_ID) === targetShopId).toArray(),
       db.expenses.filter((e) => (e.shopId || DEFAULT_DEMO_SHOP_ID) === targetShopId).toArray(),
+      db.openOrders.filter((oo) => (oo.shopId || DEFAULT_DEMO_SHOP_ID) === targetShopId).toArray(),
+      db.openOrderItems.filter((oi) => (oi.shopId || DEFAULT_DEMO_SHOP_ID) === targetShopId).toArray(),
     ]);
 
-    const backupPayload: ShopFlowBackup = {
+    return {
       format: 'shopflow-backup',
       version: 1,
       exportedAt: new Date().toISOString(),
@@ -128,9 +133,21 @@ class BackupService {
         suppliers,
         inventoryMovements,
         expenses,
+        openOrders,
+        openOrderItems,
       },
     };
+  }
 
+  /**
+   * Export the authenticated shop's data into a clean, versioned JSON backup file.
+   * Strictly omits sensitive authentication credentials (PIN, tokens, session secrets).
+   */
+  async exportBackup(
+    shopId: string,
+    shopName: string
+  ): Promise<{ success: boolean; filename: string; counts: Record<string, number> }> {
+    const backupPayload = await this.createBackupPayload(shopId, shopName);
     const jsonString = JSON.stringify(backupPayload, null, 2);
     const cleanShopName = (shopName || 'shop').replace(/[^a-zA-Z0-9_-]/g, '_');
     const dateStr = new Date().toISOString().slice(0, 10);
@@ -149,17 +166,19 @@ class BackupService {
       URL.revokeObjectURL(url);
     }
 
+    const d = backupPayload.data;
     const counts = {
-      categories: categories.length,
-      brands: brands.length,
-      products: products.length,
-      customers: customers.length,
-      sales: sales.length,
-      saleItems: saleItems.length,
-      payments: payments.length,
-      purchases: purchases.length,
-      expenses: expenses.length,
-      inventoryMovements: inventoryMovements.length,
+      categories: d.categories?.length || 0,
+      brands: d.brands?.length || 0,
+      products: d.products.length,
+      customers: d.customers.length,
+      sales: d.sales.length,
+      saleItems: d.saleItems.length,
+      payments: d.payments.length,
+      purchases: d.purchases.length,
+      expenses: d.expenses.length,
+      inventoryMovements: d.inventoryMovements.length,
+      openOrders: d.openOrders?.length || 0,
     };
 
     return { success: true, filename, counts };
@@ -310,6 +329,8 @@ class BackupService {
           db.suppliers,
           db.inventoryMovements,
           db.expenses,
+          db.openOrders,
+          db.openOrderItems,
         ],
         async () => {
           // 1. Clear existing local records for this shop
@@ -325,6 +346,8 @@ class BackupService {
             db.suppliers.filter((s) => (s.shopId || DEFAULT_DEMO_SHOP_ID) === targetShopId).delete(),
             db.inventoryMovements.filter((im) => (im.shopId || DEFAULT_DEMO_SHOP_ID) === targetShopId).delete(),
             db.expenses.filter((e) => (e.shopId || DEFAULT_DEMO_SHOP_ID) === targetShopId).delete(),
+            db.openOrders.filter((oo) => (oo.shopId || DEFAULT_DEMO_SHOP_ID) === targetShopId).delete(),
+            db.openOrderItems.filter((oi) => (oi.shopId || DEFAULT_DEMO_SHOP_ID) === targetShopId).delete(),
           ]);
 
           // 2. Insert records from backup (re-associating with currentShopId)
@@ -360,6 +383,13 @@ class BackupService {
           }
           if (d.expenses && d.expenses.length > 0) {
             await db.expenses.bulkPut(d.expenses.map((e) => ({ ...e, shopId: targetShopId })));
+          }
+          if (d.openOrders && d.openOrders.length > 0) {
+            // Restore status exactly as stored; never turn CHECKED_OUT into OPEN
+            await db.openOrders.bulkPut(d.openOrders.map((oo) => ({ ...oo, shopId: targetShopId })));
+          }
+          if (d.openOrderItems && d.openOrderItems.length > 0) {
+            await db.openOrderItems.bulkPut(d.openOrderItems.map((oi) => ({ ...oi, shopId: targetShopId })));
           }
         }
       );

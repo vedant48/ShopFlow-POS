@@ -12,6 +12,8 @@ import type {
   InventoryMovement,
   Expense,
   SyncQueueItem,
+  OpenOrder,
+  OpenOrderItem,
 } from '../types';
 
 export class ShopFlowDatabase extends Dexie {
@@ -27,6 +29,8 @@ export class ShopFlowDatabase extends Dexie {
   inventoryMovements!: Table<InventoryMovement, string>;
   expenses!: Table<Expense, string>;
   syncQueue!: Table<SyncQueueItem, string>;
+  openOrders!: Table<OpenOrder, string>;
+  openOrderItems!: Table<OpenOrderItem, string>;
 
   constructor() {
     super('ShopFlowDB');
@@ -267,6 +271,12 @@ export class ShopFlowDatabase extends Dexie {
             }
           });
       });
+
+    // Version 9: adds openOrders and openOrderItems tables for held sales and customer timeline (Step 11)
+    this.version(9).stores({
+      openOrders: 'id, shopId, customerId, status, lastActivityAt, createdAt',
+      openOrderItems: 'id, shopId, openOrderId, productId, createdAt',
+    });
   }
 }
 

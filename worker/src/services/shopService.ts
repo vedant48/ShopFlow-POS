@@ -95,6 +95,8 @@ export async function getBootstrapData(db: D1Database, shopId: string): Promise<
     inventoryMovements,
     expenses,
     suppliers,
+    openOrders,
+    openOrderItems,
   ] = await Promise.all([
     db.prepare('SELECT * FROM categories WHERE shop_id = ? ORDER BY sort_order ASC, name ASC').bind(shopId).all(),
     db.prepare('SELECT * FROM brands WHERE shop_id = ? ORDER BY sort_order ASC, name ASC').bind(shopId).all(),
@@ -108,6 +110,8 @@ export async function getBootstrapData(db: D1Database, shopId: string): Promise<
     db.prepare('SELECT * FROM inventory_movements WHERE shop_id = ?').bind(shopId).all(),
     db.prepare('SELECT * FROM expenses WHERE shop_id = ?').bind(shopId).all(),
     db.prepare('SELECT * FROM suppliers WHERE shop_id = ?').bind(shopId).all(),
+    db.prepare('SELECT * FROM open_orders WHERE shop_id = ?').bind(shopId).all(),
+    db.prepare('SELECT * FROM open_order_items WHERE shop_id = ?').bind(shopId).all(),
   ]);
 
   return {
@@ -124,5 +128,7 @@ export async function getBootstrapData(db: D1Database, shopId: string): Promise<
     inventoryMovements: inventoryMovements.results || [],
     expenses: expenses.results || [],
     suppliers: suppliers.results || [],
+    openOrders: (openOrders.results || []) as any[],
+    openOrderItems: (openOrderItems.results || []) as any[],
   };
 }

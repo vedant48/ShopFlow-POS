@@ -261,6 +261,8 @@ class SyncService {
         payments: 9,
         inventoryMovements: 10,
         expenses: 11,
+        openOrders: 12,
+        openOrderItems: 13,
       };
 
       itemsToSync.sort((a, b) => {

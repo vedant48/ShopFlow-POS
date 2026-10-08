@@ -14,6 +14,8 @@ const ENTITY_DEPENDENCY_TIER: Record<string, number> = {
   payments: 9,
   inventoryMovements: 10,
   expenses: 11,
+  openOrders: 12,
+  openOrderItems: 13,
 };
 
 export async function processSyncEvents(
@@ -789,6 +791,176 @@ async function processSingleEvent(
             eventCreatedAt,
             payload.updatedAt || eventCreatedAt
           )
+          .run();
+      }
+      break;
+    }
+
+    case 'openOrders': {
+      if (operation === 'CREATE') {
+        const existing = await db
+          .prepare('SELECT id FROM open_orders WHERE id = ? AND shop_id = ?')
+          .bind(entityId, shopId)
+          .first();
+
+        if (!existing) {
+          await db
+            .prepare(
+              `INSERT INTO open_orders (
+                id, shop_id, customer_id, temporary_customer_name, status,
+                total_amount, item_count, note, sale_id, last_activity_at,
+                created_at, updated_at
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            )
+            .bind(
+              entityId,
+              shopId,
+              payload.customerId || null,
+              payload.temporaryCustomerName || null,
+              payload.status || 'OPEN',
+              Number(payload.totalAmount || 0),
+              Number(payload.itemCount || 0),
+              payload.note || null,
+              payload.saleId || null,
+              payload.lastActivityAt || eventCreatedAt,
+              eventCreatedAt,
+              payload.updatedAt || eventCreatedAt
+            )
+            .run();
+        } else {
+          await db
+            .prepare(
+              `UPDATE open_orders SET
+                customer_id = ?, temporary_customer_name = ?, status = ?,
+                total_amount = ?, item_count = ?, note = ?, sale_id = ?,
+                last_activity_at = ?, updated_at = ?
+               WHERE id = ? AND shop_id = ?`
+            )
+            .bind(
+              payload.customerId || null,
+              payload.temporaryCustomerName || null,
+              payload.status || 'OPEN',
+              Number(payload.totalAmount || 0),
+              Number(payload.itemCount || 0),
+              payload.note || null,
+              payload.saleId || null,
+              payload.lastActivityAt || now,
+              payload.updatedAt || now,
+              entityId,
+              shopId
+            )
+            .run();
+        }
+      } else if (operation === 'UPDATE') {
+        await db
+          .prepare(
+            `UPDATE open_orders SET
+              customer_id = coalesce(?, customer_id),
+              temporary_customer_name = coalesce(?, temporary_customer_name),
+              status = coalesce(?, status),
+              total_amount = coalesce(?, total_amount),
+              item_count = coalesce(?, item_count),
+              note = coalesce(?, note),
+              sale_id = coalesce(?, sale_id),
+              last_activity_at = coalesce(?, last_activity_at),
+              updated_at = ?
+             WHERE id = ? AND shop_id = ?`
+          )
+          .bind(
+            payload.customerId !== undefined ? payload.customerId : null,
+            payload.temporaryCustomerName !== undefined ? payload.temporaryCustomerName : null,
+            payload.status || null,
+            payload.totalAmount !== undefined ? Number(payload.totalAmount) : null,
+            payload.itemCount !== undefined ? Number(payload.itemCount) : null,
+            payload.note !== undefined ? payload.note : null,
+            payload.saleId !== undefined ? payload.saleId : null,
+            payload.lastActivityAt || null,
+            payload.updatedAt || now,
+            entityId,
+            shopId
+          )
+          .run();
+      } else if (operation === 'DELETE') {
+        await db.batch([
+          db.prepare('DELETE FROM open_order_items WHERE open_order_id = ? AND shop_id = ?').bind(entityId, shopId),
+          db.prepare('DELETE FROM open_orders WHERE id = ? AND shop_id = ?').bind(entityId, shopId),
+        ]);
+      }
+      break;
+    }
+
+    case 'openOrderItems': {
+      if (operation === 'CREATE') {
+        const existing = await db
+          .prepare('SELECT id FROM open_order_items WHERE id = ? AND shop_id = ?')
+          .bind(entityId, shopId)
+          .first();
+
+        if (!existing) {
+          await db
+            .prepare(
+              `INSERT INTO open_order_items (
+                id, shop_id, open_order_id, product_id, product_name,
+                product_emoji, variant_id, variant_name, quantity, unit_price,
+                total_price, created_at, updated_at
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            )
+            .bind(
+              entityId,
+              shopId,
+              payload.openOrderId,
+              payload.productId,
+              payload.productName || 'Product',
+              payload.productEmoji || '📦',
+              payload.variantId || null,
+              payload.variantName || null,
+              Number(payload.quantity || 1),
+              Number(payload.unitPrice || 0),
+              Number(payload.totalPrice || 0),
+              eventCreatedAt,
+              payload.updatedAt || eventCreatedAt
+            )
+            .run();
+        } else {
+          await db
+            .prepare(
+              `UPDATE open_order_items SET
+                quantity = ?, unit_price = ?, total_price = ?, updated_at = ?
+               WHERE id = ? AND shop_id = ?`
+            )
+            .bind(
+              Number(payload.quantity || 1),
+              Number(payload.unitPrice || 0),
+              Number(payload.totalPrice || 0),
+              payload.updatedAt || now,
+              entityId,
+              shopId
+            )
+            .run();
+        }
+      } else if (operation === 'UPDATE') {
+        await db
+          .prepare(
+            `UPDATE open_order_items SET
+              quantity = coalesce(?, quantity),
+              unit_price = coalesce(?, unit_price),
+              total_price = coalesce(?, total_price),
+              updated_at = ?
+             WHERE id = ? AND shop_id = ?`
+          )
+          .bind(
+            payload.quantity !== undefined ? Number(payload.quantity) : null,
+            payload.unitPrice !== undefined ? Number(payload.unitPrice) : null,
+            payload.totalPrice !== undefined ? Number(payload.totalPrice) : null,
+            payload.updatedAt || now,
+            entityId,
+            shopId
+          )
+          .run();
+      } else if (operation === 'DELETE') {
+        await db
+          .prepare('DELETE FROM open_order_items WHERE id = ? AND shop_id = ?')
+          .bind(entityId, shopId)
           .run();
       }
       break;

@@ -190,6 +190,37 @@ export interface PurchaseRow {
   created_at: string;
 }
 
+export interface OpenOrderRow {
+  id: string;
+  shop_id: string;
+  customer_id: string | null;
+  temporary_customer_name: string | null;
+  status: string;
+  total_amount: number;
+  item_count: number;
+  note: string | null;
+  sale_id: string | null;
+  last_activity_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OpenOrderItemRow {
+  id: string;
+  shop_id: string;
+  open_order_id: string;
+  product_id: string;
+  product_name: string;
+  product_emoji: string | null;
+  variant_id: string | null;
+  variant_name: string | null;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface BootstrapResponse {
   shop: ShopRow;
   categories: CategoryRow[];
@@ -204,4 +235,6 @@ export interface BootstrapResponse {
   inventoryMovements: any[];
   expenses: any[];
   suppliers: any[];
+  openOrders?: OpenOrderRow[];
+  openOrderItems?: OpenOrderItemRow[];
 }

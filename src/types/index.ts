@@ -160,7 +160,9 @@ export interface SyncQueueItem extends BaseRecord {
     | 'payments'
     | 'purchases'
     | 'suppliers'
-    | 'expenses';
+    | 'expenses'
+    | 'openOrders'
+    | 'openOrderItems';
   entityId: string;
   operation: SyncOperation;
   payload: Record<string, unknown>;
@@ -168,6 +170,33 @@ export interface SyncQueueItem extends BaseRecord {
   attempts: number;
   lastAttemptAt?: string;
   errorMessage?: string;
+}
+
+// Open Orders / Held Sales / Customer Timeline Models (Step 11)
+export type OpenOrderStatus = 'OPEN' | 'CHECKED_OUT' | 'CANCELLED';
+
+export interface OpenOrder extends BaseRecord {
+  customerId?: string | null;
+  temporaryCustomerName?: string | null;
+  status: OpenOrderStatus;
+  totalAmount: number;
+  itemCount: number;
+  note?: string | null;
+  saleId?: string | null;
+  lastActivityAt: string;
+  createdById?: string;
+}
+
+export interface OpenOrderItem extends BaseRecord {
+  openOrderId: string;
+  productId: string;
+  productName: string;
+  productEmoji?: string;
+  variantId?: string;
+  variantName?: string;
+  quantity: number;
+  unitPrice: number; // Captured selling price when item was added
+  totalPrice: number; // quantity * unitPrice
 }
 
 // In-cart item state for Quick Sale tray
@@ -187,3 +216,4 @@ export interface CustomerLedgerEntry {
   isCredit: boolean; // true for +₹X (sale), false for -₹X (payment)
   referenceId: string;
 }
+

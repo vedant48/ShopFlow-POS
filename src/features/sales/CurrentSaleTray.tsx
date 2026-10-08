@@ -1,7 +1,7 @@
 import React from 'react';
 import type { CartItem } from '../../types';
 import { formatCurrency } from '../../lib/utils';
-import { Plus, Minus, Trash2, Check, BookOpen, ShoppingBag } from 'lucide-react';
+import { Plus, Minus, Trash2, Check, BookOpen, ShoppingBag, Clock, ArrowLeft } from 'lucide-react';
 
 interface CurrentSaleTrayProps {
   cart: CartItem[];
@@ -12,6 +12,9 @@ interface CurrentSaleTrayProps {
   onClearCart: () => void;
   onPaidSale: () => void;
   onUdhaarSale: () => void;
+  onHoldOrder?: () => void;
+  activeEditingOrderName?: string | null;
+  onSaveAndReturnOrder?: () => void;
   isProcessing?: boolean;
 }
 
@@ -24,6 +27,9 @@ export const CurrentSaleTray: React.FC<CurrentSaleTrayProps> = ({
   onClearCart,
   onPaidSale,
   onUdhaarSale,
+  onHoldOrder,
+  activeEditingOrderName,
+  onSaveAndReturnOrder,
   isProcessing = false,
 }) => {
   // Empty Cart State
@@ -46,26 +52,47 @@ export const CurrentSaleTray: React.FC<CurrentSaleTrayProps> = ({
   return (
     <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-100">
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse" />
-          <h2 className="text-sm font-extrabold text-slate-900 tracking-tight uppercase">
-            Current Sale
-          </h2>
-          <span className="text-xs font-bold text-slate-500 bg-slate-200/70 px-2 py-0.5 rounded-full">
-            {totalItems}
-          </span>
+      {activeEditingOrderName ? (
+        <div className="px-4 py-2.5 bg-amber-500 text-white flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse" />
+            <h2 className="text-xs font-black tracking-tight uppercase">
+              Adding to: {activeEditingOrderName}
+            </h2>
+          </div>
+          {onSaveAndReturnOrder && (
+            <button
+              type="button"
+              onClick={onSaveAndReturnOrder}
+              className="text-xs font-extrabold text-white bg-amber-700/60 hover:bg-amber-700 px-2.5 py-1 rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+            >
+              <ArrowLeft className="w-3 h-3" />
+              <span>Done</span>
+            </button>
+          )}
         </div>
+      ) : (
+        <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse" />
+            <h2 className="text-sm font-extrabold text-slate-900 tracking-tight uppercase">
+              Current Sale
+            </h2>
+            <span className="text-xs font-bold text-slate-500 bg-slate-200/70 px-2 py-0.5 rounded-full">
+              {totalItems}
+            </span>
+          </div>
 
-        <button
-          type="button"
-          onClick={onClearCart}
-          disabled={isProcessing}
-          className="text-xs text-slate-500 hover:text-rose-600 font-semibold px-2 py-1 rounded-lg transition-colors cursor-pointer"
-        >
-          Clear
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={onClearCart}
+            disabled={isProcessing}
+            className="text-xs text-slate-500 hover:text-rose-600 font-semibold px-2 py-1 rounded-lg transition-colors cursor-pointer"
+          >
+            Clear
+          </button>
+        </div>
+      )}
 
       {/* Cart Items List */}
       <div className="p-3 space-y-2.5 max-h-60 sm:max-h-80 overflow-y-auto overscroll-contain divide-y divide-slate-100">
@@ -154,30 +181,58 @@ export const CurrentSaleTray: React.FC<CurrentSaleTrayProps> = ({
         </span>
       </div>
 
-      {/* Prominent Payment Actions: [ PAID ] and [ UDHAAR ] */}
-      <div className="p-3 bg-white grid grid-cols-2 gap-2.5 border-t border-slate-100">
-        {/* PAID (Primary Blue CTA) */}
-        <button
-          type="button"
-          disabled={isProcessing}
-          onClick={onPaidSale}
-          className="h-14 sm:h-16 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-lg sm:text-xl flex items-center justify-center gap-2 shadow-sm shadow-blue-600/30 tap-press cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50"
-        >
-          <Check className="w-6 h-6 stroke-[3]" />
-          <span>PAID</span>
-        </button>
+      {/* Actions: Normal (PAID, UDHAAR, HOLD) vs Editing Order (SAVE & RETURN) */}
+      {activeEditingOrderName ? (
+        <div className="p-3 bg-white space-y-2 border-t border-slate-100">
+          <button
+            type="button"
+            onClick={onSaveAndReturnOrder}
+            className="w-full h-14 rounded-2xl bg-amber-500 hover:bg-amber-600 active:scale-98 text-white font-black text-base flex items-center justify-center gap-2 shadow-sm shadow-amber-500/30 transition-all cursor-pointer"
+          >
+            <Check className="w-5 h-5 stroke-[3]" />
+            <span>SAVE & RETURN TO TIMELINE</span>
+          </button>
+        </div>
+      ) : (
+        <div className="p-3 bg-white space-y-2 border-t border-slate-100">
+          <div className="grid grid-cols-2 gap-2">
+            {/* PAID (Primary Blue CTA) */}
+            <button
+              type="button"
+              disabled={isProcessing}
+              onClick={onPaidSale}
+              className="h-13 sm:h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-base sm:text-lg flex items-center justify-center gap-2 shadow-sm shadow-blue-600/30 tap-press cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50"
+            >
+              <Check className="w-5 h-5 stroke-[3]" />
+              <span>PAID</span>
+            </button>
 
-        {/* UDHAAR (Secondary Contrasting Violet CTA) */}
-        <button
-          type="button"
-          disabled={isProcessing}
-          onClick={onUdhaarSale}
-          className="h-14 sm:h-16 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white font-black text-lg sm:text-xl flex items-center justify-center gap-2 shadow-sm shadow-violet-600/30 tap-press cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50"
-        >
-          <BookOpen className="w-5 h-5 stroke-[2.5]" />
-          <span>UDHAAR</span>
-        </button>
-      </div>
+            {/* UDHAAR (Secondary Contrasting Violet CTA) */}
+            <button
+              type="button"
+              disabled={isProcessing}
+              onClick={onUdhaarSale}
+              className="h-13 sm:h-14 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white font-black text-base sm:text-lg flex items-center justify-center gap-2 shadow-sm shadow-violet-600/30 tap-press cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50"
+            >
+              <BookOpen className="w-4 h-4 stroke-[2.5]" />
+              <span>UDHAAR</span>
+            </button>
+          </div>
+
+          {/* HOLD ORDER (Amber Action) */}
+          {onHoldOrder && (
+            <button
+              type="button"
+              disabled={isProcessing}
+              onClick={onHoldOrder}
+              className="w-full h-11 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/90 font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-98"
+            >
+              <Clock className="w-4 h-4 text-amber-600" />
+              <span>HOLD ORDER (TIMELINE)</span>
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

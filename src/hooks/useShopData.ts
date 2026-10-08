@@ -89,3 +89,19 @@ export function useDashboardStats() {
     isLoading: stats === undefined,
   };
 }
+
+export function useOpenOrders() {
+  const openOrders = useLiveQuery(async () => {
+    const currentShopId = authService.getCurrentShopId();
+    const orders = await db.openOrders
+      .filter((o) => (o.shopId || 'shop_demo_001') === currentShopId && o.status === 'OPEN')
+      .toArray();
+    return orders.sort((a, b) => new Date(b.lastActivityAt).getTime() - new Date(a.lastActivityAt).getTime());
+  }, []);
+
+  return {
+    openOrders: openOrders || [],
+    openOrdersCount: openOrders?.length ?? 0,
+    isLoading: openOrders === undefined,
+  };
+}
