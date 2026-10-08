@@ -5,7 +5,7 @@ import { CollectPaymentModal } from '../features/customers/CollectPaymentModal';
 import { CustomerLedgerModal } from '../features/customers/CustomerLedgerModal';
 import { formatCurrency } from '../lib/utils';
 import type { Customer } from '../types';
-import { Plus, Search, Phone, ArrowUpRight, IndianRupee } from 'lucide-react';
+import { Plus, Search, Phone, ArrowUpRight, IndianRupee, Pencil } from 'lucide-react';
 
 export const CustomersPage: React.FC = () => {
   const { customers, isLoading } = useCustomers();
@@ -14,6 +14,7 @@ export const CustomersPage: React.FC = () => {
 
   // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [collectingCustomer, setCollectingCustomer] = useState<Customer | null>(null);
   const [viewingLedgerCustomer, setViewingLedgerCustomer] = useState<Customer | null>(null);
 
@@ -194,6 +195,18 @@ export const CustomersPage: React.FC = () => {
                     </button>
                   )}
 
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingCustomer(cust);
+                    }}
+                    className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-violet-100 active:scale-95 text-slate-500 hover:text-violet-700 flex items-center justify-center transition-all cursor-pointer"
+                    title="Edit customer details"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+
                   <ArrowUpRight className="w-4 h-4 text-slate-300 group-hover:text-violet-600 transition-colors hidden sm:block" />
                 </div>
               </div>
@@ -204,8 +217,12 @@ export const CustomersPage: React.FC = () => {
 
       {/* Modals */}
       <AddCustomerModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        isOpen={isAddModalOpen || !!editingCustomer}
+        customer={editingCustomer}
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setEditingCustomer(null);
+        }}
       />
 
       <CollectPaymentModal
