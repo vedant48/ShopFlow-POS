@@ -19,10 +19,12 @@ const ENTITY_DEPENDENCY_TIER: Record<string, number> = {
 export async function processSyncEvents(
   db: D1Database,
   shopId: string,
-  events: SyncEventPayload[]
+  events: SyncEventPayload[],
+  requestId: string = 'req_unknown'
 ): Promise<SyncResult> {
   const successful: string[] = [];
   const failed: Array<{ id: string; error: string }> = [];
+  const timings: any[] = [];
 
   // Sort events chronologically, and resolve dependency tiers (Section 15)
   const sortedEvents = [...events].sort((a, b) => {
@@ -36,41 +38,96 @@ export async function processSyncEvents(
     return tierA - tierB;
   });
 
+  // 1. Batch idempotency pre-check across all incoming events (Section 11 Optimization)
+  const syncIds = sortedEvents.map((e) => e.id);
+  const alreadyProcessed = new Set<string>();
+  if (syncIds.length > 0) {
+    const placeholders = syncIds.map(() => '?').join(',');
+    const existing = await db
+      .prepare(`SELECT id FROM sync_events WHERE id IN (${placeholders}) AND shop_id = ?`)
+      .bind(...syncIds, shopId)
+      .all<{ id: string }>();
+    if (existing.results) {
+      for (const row of existing.results) {
+        alreadyProcessed.add(row.id);
+      }
+    }
+  }
+
   for (const event of sortedEvents) {
-    try {
-      await processSingleEvent(db, shopId, event);
+    if (alreadyProcessed.has(event.id)) {
+      console.log(`[Worker ${requestId}] Event ${event.id} (${event.entity}:${event.entityId}:${event.operation}) already processed idempotently`);
       successful.push(event.id);
+      timings.push({
+        id: event.id,
+        entity: event.entity,
+        entityId: event.entityId,
+        operation: event.operation,
+        totalEventMs: 0,
+        skipped: 1,
+      });
+      continue;
+    }
+
+    const eventStart = performance.now();
+    try {
+      const eventTiming = await processSingleEvent(db, shopId, event, requestId, true);
+      successful.push(event.id);
+      timings.push({
+        id: event.id,
+        entity: event.entity,
+        entityId: event.entityId,
+        operation: event.operation,
+        totalEventMs: performance.now() - eventStart,
+        ...eventTiming,
+      });
     } catch (err: any) {
-      console.error(`Sync error for event ${event.id}:`, err);
+      console.error(`[Worker ${requestId}] Sync error for event ${event.id} (${event.entity}:${event.entityId}:${event.operation}):`, err);
       failed.push({
         id: event.id,
         error: err?.message || 'Unknown processing error',
       });
+      timings.push({
+        id: event.id,
+        entity: event.entity,
+        entityId: event.entityId,
+        operation: event.operation,
+        totalEventMs: performance.now() - eventStart,
+        error: err?.message,
+      });
     }
   }
 
-  return { successful, failed };
+  return { successful, failed, timings };
 }
 
 async function processSingleEvent(
   db: D1Database,
   shopId: string,
-  event: SyncEventPayload
-): Promise<void> {
+  event: SyncEventPayload,
+  requestId: string = 'req_unknown',
+  skipIdempotencyCheck: boolean = false
+): Promise<Record<string, number>> {
   const { id: syncId, entity, entityId, operation, payload, createdAt } = event;
   const now = new Date().toISOString();
   const eventCreatedAt = createdAt || now;
 
-  // 1. Idempotency Check (Section 11)
-  // If this exact sync queue event ID has already been recorded in sync_events, it was processed
-  const existingSync = await db
-    .prepare('SELECT id FROM sync_events WHERE id = ? AND shop_id = ?')
-    .bind(syncId, shopId)
-    .first();
+  let q1Duration = 0;
+  if (!skipIdempotencyCheck) {
+    const q1Start = performance.now();
+    const existingSync = await db
+      .prepare('SELECT id FROM sync_events WHERE id = ? AND shop_id = ?')
+      .bind(syncId, shopId)
+      .first();
+    q1Duration = performance.now() - q1Start;
 
-  if (existingSync) {
-    return; // Already processed idempotently
+    if (existingSync) {
+      console.log(`[Worker ${requestId}] Event ${syncId} (${entity}:${entityId}:${operation}) already processed idempotently (check took ${q1Duration.toFixed(2)}ms)`);
+      return { q1IdempotencyMs: q1Duration, skipped: 1 };
+    }
   }
+
+  const entityOpStart = performance.now();
 
   // 2. Route by entity type with strict shop isolation
   switch (entity) {
@@ -715,7 +772,10 @@ async function processSingleEvent(
       break;
   }
 
+  const entityOpDuration = performance.now() - entityOpStart;
+
   // 3. Record processed event in sync_events for permanent audit and idempotency
+  const q4Start = performance.now();
   await db
     .prepare(
       `INSERT INTO sync_events (
@@ -732,4 +792,15 @@ async function processSingleEvent(
       now
     )
     .run();
+  const q4Duration = performance.now() - q4Start;
+  const totalD1 = q1Duration + entityOpDuration + q4Duration;
+
+  console.log(`[Worker ${requestId}] Event ${syncId} (${entity}:${entityId}:${operation}) D1 queries: q1_idemp=${q1Duration.toFixed(2)}ms, entity_op=${entityOpDuration.toFixed(2)}ms, q4_audit=${q4Duration.toFixed(2)}ms | total_D1=${totalD1.toFixed(2)}ms`);
+
+  return {
+    q1IdempotencyMs: q1Duration,
+    entityOpMs: entityOpDuration,
+    q4AuditMs: q4Duration,
+    totalD1Ms: totalD1,
+  };
 }

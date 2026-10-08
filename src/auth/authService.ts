@@ -149,7 +149,7 @@ class AuthService {
   async login(
     phone: string,
     pin: string
-  ): Promise<{ success: boolean; error?: string; user?: AuthUser; shop?: AuthShop }> {
+  ): Promise<{ success: boolean; error?: string; user?: AuthUser; shop?: AuthShop; token?: string }> {
     const deviceId = getOrCreateDeviceId();
     const pinHashLocal = await hashPinClient(pin);
     const cleanPhone = phone.replace(/\D/g, '');
@@ -163,7 +163,7 @@ class AuthService {
         if (saved.pinHashLocal && saved.pinHashLocal === pinHashLocal) {
           this.currentSession = saved;
           this.notify();
-          return { success: true, user: saved.user, shop: saved.shop };
+          return { success: true, user: saved.user, shop: saved.shop, token: saved.token };
         }
         return { success: false, error: 'Incorrect PIN' };
       }
@@ -187,7 +187,7 @@ class AuthService {
           this.currentSession = session;
           saveSession(session);
           this.notify();
-          return { success: true, user: session.user, shop: session.shop };
+          return { success: true, user: session.user, shop: session.shop, token: session.token };
         }
         return { success: false, error: 'Incorrect PIN' };
       }
@@ -216,7 +216,7 @@ class AuthService {
       this.currentSession = session;
       this.notify();
 
-      return { success: true, user: res.user, shop: res.shop };
+      return { success: true, user: res.user, shop: res.shop, token: res.token };
     } catch (err: any) {
       // Check offline fallback if network failed mid-flight
       const saved = loadSavedSession();
@@ -242,7 +242,7 @@ class AuthService {
     shopName: string;
     pin: string;
     startWithSampleProducts?: boolean;
-  }): Promise<{ success: boolean; error?: string; user?: AuthUser; shop?: AuthShop }> {
+  }): Promise<{ success: boolean; error?: string; user?: AuthUser; shop?: AuthShop; token?: string }> {
     const deviceId = getOrCreateDeviceId();
     const pinHashLocal = await hashPinClient(params.pin);
 
@@ -274,7 +274,7 @@ class AuthService {
       }
 
       this.notify();
-      return { success: true, user: res.user, shop: res.shop };
+      return { success: true, user: res.user, shop: res.shop, token: res.token };
     } catch (err: any) {
       return {
         success: false,

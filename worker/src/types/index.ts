@@ -27,6 +27,7 @@ export interface SyncRequest {
 export interface SyncResult {
   successful: string[];
   failed: Array<{ id: string; error: string }>;
+  timings?: any[];
 }
 
 export interface ShopRow {

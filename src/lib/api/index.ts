@@ -7,10 +7,16 @@ class ApiClient {
   private defaultShopId: string;
 
   constructor() {
-    const envUrl = typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL;
+    const nodeProcess = typeof globalThis !== 'undefined' ? (globalThis as any).process : undefined;
+    const envUrl =
+      (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) ||
+      nodeProcess?.env?.VITE_API_URL ||
+      'https://shopflow-worker.vedant-753.workers.dev';
     this.baseUrl = (envUrl ? String(envUrl).replace(/\/$/, '') : '') + '/api';
     this.defaultShopId =
-      (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SHOP_ID) || DEFAULT_DEMO_SHOP_ID;
+      (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SHOP_ID) ||
+      nodeProcess?.env?.VITE_SHOP_ID ||
+      DEFAULT_DEMO_SHOP_ID;
   }
 
   getShopId(overrideShopId?: string): string {

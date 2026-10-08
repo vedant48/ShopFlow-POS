@@ -20,6 +20,8 @@ type SyncListener = (stats: SyncStats) => void;
 
 class SyncService {
   private isSyncing = false;
+  private hasPendingSyncRequest = false;
+  private enqueueDebounceTimer: ReturnType<typeof setTimeout> | null = null;
   private lastSyncedAt: string | null =
     typeof localStorage !== 'undefined'
       ? localStorage.getItem('shopflow_last_successful_sync_at')
@@ -43,6 +45,10 @@ class SyncService {
 
   // Teardown method for test cleanup or app unmount
   destroy() {
+    if (this.enqueueDebounceTimer) {
+      clearTimeout(this.enqueueDebounceTimer);
+      this.enqueueDebounceTimer = null;
+    }
     if (this.periodicInterval) {
       clearInterval(this.periodicInterval);
       this.periodicInterval = null;
@@ -126,9 +132,15 @@ class SyncService {
     await db.syncQueue.add(item);
     this.notify();
 
-    // Trigger immediate async sync if online
+    // Trigger immediate async sync if online (debounced so multi-entity transactions batch together)
     if (typeof navigator !== 'undefined' && navigator.onLine) {
-      setTimeout(() => this.syncPendingEvents(), 100);
+      if (this.enqueueDebounceTimer) {
+        clearTimeout(this.enqueueDebounceTimer);
+      }
+      this.enqueueDebounceTimer = setTimeout(() => {
+        this.enqueueDebounceTimer = null;
+        this.syncPendingEvents();
+      }, 50);
     }
 
     return item.id;
@@ -196,6 +208,7 @@ class SyncService {
     }
 
     if (this.isSyncing && !force) {
+      this.hasPendingSyncRequest = true;
       return { success: false, synced: 0, failed: 0, error: 'Already syncing' };
     }
 
@@ -266,7 +279,7 @@ class SyncService {
       this.notify();
 
       // 2. Send batch to Cloudflare Worker
-      const response = await api.sync(itemsToSync);
+      const response = await api.sync(itemsToSync, currentShopId);
 
       // 3. Mark successful events as SYNCED
       if (response.successful && response.successful.length > 0) {
@@ -330,6 +343,15 @@ class SyncService {
     } finally {
       this.isSyncing = false;
       this.notify();
+
+      if (this.hasPendingSyncRequest) {
+        this.hasPendingSyncRequest = false;
+        setTimeout(() => {
+          if (typeof navigator !== 'undefined' && navigator.onLine && !this.isSyncing) {
+            this.syncPendingEvents();
+          }
+        }, 50);
+      }
     }
   }
 

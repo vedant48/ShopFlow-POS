@@ -15,6 +15,10 @@ export default {
       return corsPreflight;
     }
 
+    const reqStart = performance.now();
+    const requestId = request.headers.get('x-request-id') || `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    console.log(`[Worker ${requestId}] >>> ${request.method} ${request.url} received at ${new Date().toISOString()}`);
+
     try {
       const url = new URL(request.url);
       const path = url.pathname;
@@ -78,6 +82,8 @@ export default {
       }
 
       // 7. Return response with CORS headers
+      const totalReqDuration = performance.now() - reqStart;
+      console.log(`[Worker ${requestId}] <<< ${request.method} ${request.url} responded with ${response.status} in ${totalReqDuration.toFixed(2)}ms`);
       return withCors(response);
     } catch (err: any) {
       console.error('Unhandled Worker error:', err);

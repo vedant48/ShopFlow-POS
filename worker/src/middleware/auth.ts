@@ -97,6 +97,7 @@ export async function authenticateRequest(
   }
 
   // Derive user and shop strictly from verified payload (Section 7, 26)
+  const authD1Start = performance.now();
   const [user, shop] = await Promise.all([
     env.DB.prepare('SELECT * FROM users WHERE id = ? AND shop_id = ?')
       .bind(payload.userId, payload.shopId)
@@ -105,6 +106,8 @@ export async function authenticateRequest(
       .bind(payload.shopId)
       .first<ShopRow>(),
   ]);
+  const authD1Duration = performance.now() - authD1Start;
+  console.log(`[Worker Auth] user/shop D1 lookup took ${authD1Duration.toFixed(2)}ms for shop ${payload.shopId}`);
 
   if (!user || !shop) {
     return {
