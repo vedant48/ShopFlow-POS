@@ -10,12 +10,12 @@ export async function getShop(db: D1Database, shopId: string): Promise<ShopRow |
 export async function getProducts(db: D1Database, shopId: string) {
   const result = await db
     .prepare(
-      `SELECT id, shop_id, name, emoji, selling_price, cost_price, stock,
+      `SELECT id, shop_id, name, emoji, selling_price, cost_price, mrp, price_variants, sort_order, stock,
               min_stock, opening_stock, unit, category, category_id, brand_id, sku, barcode, active,
               created_at, updated_at
        FROM products
        WHERE shop_id = ?
-       ORDER BY name ASC`
+       ORDER BY sort_order ASC, name ASC`
     )
     .bind(shopId)
     .all();

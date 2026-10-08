@@ -31,7 +31,7 @@ export const inventoryService = {
         ? JSON.parse(localStorage.getItem('shopflow_auth_session') || '{}')?.shop?.id || 'shop_demo_001'
         : 'shop_demo_001');
 
-    return await db.products
+    const prods = await db.products
       .filter((p) => {
         const matchesShop = (p.shopId || 'shop_demo_001') === targetShopId;
         if (!matchesShop) return false;
@@ -39,6 +39,10 @@ export const inventoryService = {
         return true;
       })
       .toArray();
+
+    return prods.sort(
+      (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.name.localeCompare(b.name)
+    );
   },
 
   async getProductById(id: string): Promise<Product | undefined> {
@@ -59,10 +63,38 @@ export const inventoryService = {
         ? JSON.parse(localStorage.getItem('shopflow_auth_session') || '{}')?.shop?.id || 'shop_demo_001'
         : 'shop_demo_001');
 
+    // Default sortOrder to highest in category or shop + 1 if not specified
+    let sortOrder = productData.sortOrder;
+    if (sortOrder === undefined) {
+      const existing = await db.products
+        .filter((p) => (p.shopId || 'shop_demo_001') === shopId)
+        .toArray();
+      sortOrder = existing.length > 0 ? Math.max(...existing.map((p) => p.sortOrder || 0)) + 1 : 1;
+    }
+
+    const mrp = productData.mrp !== undefined && !isNaN(productData.mrp) ? productData.mrp : productData.sellingPrice;
+
+    // Ensure default price variant is always present
+    const defaultVariant = {
+      id: generateId('pv'),
+      name: 'Standard',
+      sellingPrice: productData.sellingPrice,
+      mrp: mrp,
+      costPrice: productData.costPrice,
+      isDefault: true,
+    };
+
+    const priceVariants = productData.priceVariants && productData.priceVariants.length > 0
+      ? productData.priceVariants
+      : [defaultVariant];
+
     const newProduct: Product = {
       ...productData,
       id,
       shopId,
+      mrp,
+      priceVariants,
+      sortOrder,
       stock: initialStock,
       openingStock: initialStock,
       active: productData.active !== undefined ? productData.active : true,
@@ -121,15 +153,59 @@ export const inventoryService = {
     if (!existing) throw new Error(`Product ${id} not found`);
 
     const now = new Date().toISOString();
-    const updatedData = { ...updates, updatedAt: now };
+
+    // If sellingPrice or mrp changed and priceVariants are not explicitly replaced,
+    // update the default variant's sellingPrice & mrp
+    let priceVariants = updates.priceVariants !== undefined ? updates.priceVariants : existing.priceVariants;
+    const effectiveSellingPrice = updates.sellingPrice !== undefined ? updates.sellingPrice : existing.sellingPrice;
+    const effectiveMrp = updates.mrp !== undefined ? updates.mrp : (existing.mrp ?? effectiveSellingPrice);
+
+    if (priceVariants && priceVariants.length > 0) {
+      priceVariants = priceVariants.map((v) => {
+        if (v.isDefault) {
+          return {
+            ...v,
+            sellingPrice: effectiveSellingPrice,
+            mrp: effectiveMrp,
+          };
+        }
+        return v;
+      });
+    }
+
+    const updatedData = {
+      ...updates,
+      priceVariants,
+      updatedAt: now,
+    };
 
     await db.products.update(id, updatedData);
     await syncService.enqueue(
       'products',
       id,
       'UPDATE',
-      updatedData as Record<string, unknown>
+      { ...existing, ...updatedData } as Record<string, unknown>,
+      existing.shopId
     );
+  },
+
+  async reorderProducts(orderedProductIds: string[]): Promise<void> {
+    const now = new Date().toISOString();
+    for (let i = 0; i < orderedProductIds.length; i++) {
+      const id = orderedProductIds[i];
+      const existing = await db.products.get(id);
+      if (existing) {
+        const updated = { ...existing, sortOrder: i + 1, updatedAt: now };
+        await db.products.put(updated);
+        await syncService.enqueue(
+          'products',
+          id,
+          'UPDATE',
+          updated as unknown as Record<string, unknown>,
+          existing.shopId
+        );
+      }
+    }
   },
 
   async toggleFavorite(id: string): Promise<boolean> {

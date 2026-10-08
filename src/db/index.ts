@@ -237,6 +237,36 @@ export class ShopFlowDatabase extends Dexie {
         await tx.table('expenses').clear();
         await tx.table('syncQueue').clear();
       });
+
+    // Version 8: adds sortOrder, mrp, and priceVariants on products
+    this.version(8)
+      .stores({
+        products: 'id, shopId, name, category, categoryId, brandId, sku, barcode, stock, minStock, active, isFavorite, sortOrder, createdAt',
+      })
+      .upgrade((tx) => {
+        return tx
+          .table('products')
+          .toCollection()
+          .modify((prod: Record<string, any>) => {
+            if (prod.mrp === undefined) {
+              prod.mrp = prod.sellingPrice || 0;
+            }
+            if (prod.sortOrder === undefined) {
+              prod.sortOrder = 0;
+            }
+            if (!prod.priceVariants || !Array.isArray(prod.priceVariants) || prod.priceVariants.length === 0) {
+              prod.priceVariants = [
+                {
+                  id: `pv_${prod.id || 'def'}_1`,
+                  name: 'Standard',
+                  sellingPrice: prod.sellingPrice || 0,
+                  mrp: prod.mrp ?? prod.sellingPrice ?? 0,
+                  isDefault: true,
+                },
+              ];
+            }
+          });
+      });
   }
 }
 

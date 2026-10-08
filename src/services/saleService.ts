@@ -3,6 +3,7 @@ import type {
   Sale,
   SaleItem,
   Product,
+  PriceVariant,
   PaymentStatus,
   PaymentMethod,
   InventoryMovement,
@@ -15,6 +16,7 @@ export interface CreateSaleInput {
   items: {
     product: Product;
     quantity: number;
+    selectedVariant?: PriceVariant;
   }[];
   paymentStatus: PaymentStatus;
   paymentMethod?: PaymentMethod;
@@ -43,11 +45,11 @@ export const saleService = {
       throw new Error('Cannot create a sale without items');
     }
 
-    // Exact integer-safe calculation: sum of (sellingPrice * quantity)
-    const totalAmount = input.items.reduce(
-      (sum, item) => sum + Math.round(item.product.sellingPrice * item.quantity),
-      0
-    );
+    // Exact integer-safe calculation: sum of (effective price * quantity)
+    const totalAmount = input.items.reduce((sum, item) => {
+      const price = item.selectedVariant?.sellingPrice ?? item.product.sellingPrice;
+      return sum + Math.round(price * item.quantity);
+    }, 0);
     const itemCount = input.items.reduce((sum, item) => sum + item.quantity, 0);
 
     const now = new Date().toISOString();
@@ -116,20 +118,28 @@ export const saleService = {
         // Create SaleItems and decrement inventory for each item
         for (const cartItem of input.items) {
           const itemId = generateId('item');
-          const itemTotal = Math.round(cartItem.product.sellingPrice * cartItem.quantity);
+          const itemPrice = cartItem.selectedVariant?.sellingPrice ?? cartItem.product.sellingPrice;
+          const itemCost = cartItem.selectedVariant?.costPrice ?? cartItem.product.costPrice ?? 0;
+          const itemTotal = Math.round(itemPrice * cartItem.quantity);
+          const itemName = cartItem.selectedVariant && !cartItem.selectedVariant.isDefault
+            ? `${cartItem.product.name} (${cartItem.selectedVariant.name})`
+            : cartItem.product.name;
+
           const saleItem: SaleItem = {
             id: itemId,
             shopId,
             saleId: newSale.id,
             productId: cartItem.product.id,
-            productName: cartItem.product.name,
+            productName: itemName,
             productEmoji: cartItem.product.emoji || '📦',
+            variantId: cartItem.selectedVariant?.id,
+            variantName: cartItem.selectedVariant?.name,
             quantity: cartItem.quantity,
-            unitPrice: cartItem.product.sellingPrice,
-            sellingPrice: cartItem.product.sellingPrice,
+            unitPrice: itemPrice,
+            sellingPrice: itemPrice,
             totalPrice: itemTotal,
-            unitCost: cartItem.product.costPrice || 0,
-            costPrice: cartItem.product.costPrice || 0,
+            unitCost: itemCost,
+            costPrice: itemCost,
             createdAt: now,
             updatedAt: now,
           };

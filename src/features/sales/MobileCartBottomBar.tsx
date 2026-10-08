@@ -7,8 +7,8 @@ interface MobileCartBottomBarProps {
   cart: CartItem[];
   subtotal: number;
   totalItems: number;
-  onUpdateQuantity: (productId: string, delta: number) => void;
-  onRemoveItem: (productId: string) => void;
+  onUpdateQuantity: (productId: string, delta: number, variantId?: string) => void;
+  onRemoveItem: (productId: string, variantId?: string) => void;
   onClearCart: () => void;
   onPaidSale: () => void;
   onUdhaarSale: () => void;
@@ -140,69 +140,80 @@ export const MobileCartBottomBar: React.FC<MobileCartBottomBarProps> = ({
 
             {/* Cart Items List with Steppers */}
             <div className="flex-1 overflow-y-auto overscroll-contain divide-y divide-slate-100 py-2 space-y-2 max-h-64 sm:max-h-80">
-              {cart.map((item) => (
-                <div
-                  key={item.product.id}
-                  className="pt-2 first:pt-0 flex items-center justify-between gap-2"
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-lg select-none">{item.product.emoji}</span>
-                      <span className="text-sm font-extrabold text-slate-900 truncate">
-                        {item.product.name}
+              {cart.map((item) => {
+                const itemKey = `${item.product.id}_${item.selectedVariant?.id || 'base'}`;
+                const effectivePrice = item.selectedVariant?.sellingPrice ?? item.product.sellingPrice;
+                const isCustomVariant = item.selectedVariant && !item.selectedVariant.isDefault;
+
+                return (
+                  <div
+                    key={itemKey}
+                    className="pt-2 first:pt-0 flex items-center justify-between gap-2"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-lg select-none">{item.product.emoji}</span>
+                        <span className="text-sm font-extrabold text-slate-900 truncate">
+                          {item.product.name}
+                        </span>
+                        {isCustomVariant && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                            {item.selectedVariant?.name}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[11px] font-semibold text-slate-400 block pl-6">
+                        {formatCurrency(effectivePrice)} each
                       </span>
                     </div>
-                    <span className="text-[11px] font-semibold text-slate-400 block pl-6">
-                      {formatCurrency(item.product.sellingPrice)} each
-                    </span>
+
+                    {/* Quantity Stepper (large touch targets) */}
+                    <div className="flex items-center gap-1 bg-slate-100/90 rounded-2xl p-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => onUpdateQuantity(item.product.id, -1, item.selectedVariant?.id)}
+                        disabled={isProcessing}
+                        className="w-10 h-10 flex items-center justify-center rounded-xl bg-white hover:bg-slate-200 active:scale-95 text-slate-700 font-black shadow-2xs transition-all cursor-pointer"
+                        aria-label={`Decrease ${item.product.name}`}
+                      >
+                        <Minus className="w-4 h-4 stroke-[3]" />
+                      </button>
+
+                      <span className="w-7 text-center text-base font-black text-slate-900 select-none">
+                        {item.quantity}
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() => onUpdateQuantity(item.product.id, 1, item.selectedVariant?.id)}
+                        disabled={isProcessing || item.quantity >= item.product.stock}
+                        className={`w-10 h-10 flex items-center justify-center rounded-xl font-black shadow-2xs transition-all cursor-pointer ${
+                          item.quantity >= item.product.stock
+                            ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                            : 'bg-blue-600 hover:bg-blue-700 active:scale-95 text-white'
+                        }`}
+                        aria-label={`Increase ${item.product.name}`}
+                      >
+                        <Plus className="w-4 h-4 stroke-[3]" />
+                      </button>
+                    </div>
+
+                    {/* Item Total & Remove */}
+                    <div className="text-right min-w-[55px] shrink-0">
+                      <span className="text-sm font-black text-slate-900 block">
+                        {formatCurrency(effectivePrice * item.quantity)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => onRemoveItem(item.product.id, item.selectedVariant?.id)}
+                        className="text-[11px] text-slate-400 hover:text-rose-500 font-medium inline-flex items-center gap-0.5 mt-0.5 cursor-pointer"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
                   </div>
-
-                  {/* Quantity Stepper (large touch targets) */}
-                  <div className="flex items-center gap-1 bg-slate-100/90 rounded-2xl p-1 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => onUpdateQuantity(item.product.id, -1)}
-                      disabled={isProcessing}
-                      className="w-10 h-10 flex items-center justify-center rounded-xl bg-white hover:bg-slate-200 active:scale-95 text-slate-700 font-black shadow-2xs transition-all cursor-pointer"
-                      aria-label={`Decrease ${item.product.name}`}
-                    >
-                      <Minus className="w-4 h-4 stroke-[3]" />
-                    </button>
-
-                    <span className="w-7 text-center text-base font-black text-slate-900 select-none">
-                      {item.quantity}
-                    </span>
-
-                    <button
-                      type="button"
-                      onClick={() => onUpdateQuantity(item.product.id, 1)}
-                      disabled={isProcessing || item.quantity >= item.product.stock}
-                      className={`w-10 h-10 flex items-center justify-center rounded-xl font-black shadow-2xs transition-all cursor-pointer ${
-                        item.quantity >= item.product.stock
-                          ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                          : 'bg-blue-600 hover:bg-blue-700 active:scale-95 text-white'
-                      }`}
-                      aria-label={`Increase ${item.product.name}`}
-                    >
-                      <Plus className="w-4 h-4 stroke-[3]" />
-                    </button>
-                  </div>
-
-                  {/* Item Total & Remove */}
-                  <div className="text-right min-w-[55px] shrink-0">
-                    <span className="text-sm font-black text-slate-900 block">
-                      {formatCurrency(item.product.sellingPrice * item.quantity)}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => onRemoveItem(item.product.id)}
-                      className="text-[11px] text-slate-400 hover:text-rose-500 font-medium inline-flex items-center gap-0.5 mt-0.5 cursor-pointer"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Subtotal */}

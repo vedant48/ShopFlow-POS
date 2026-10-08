@@ -580,6 +580,19 @@ class SyncService {
                 emoji: p.emoji || '📦',
                 sellingPrice: Number(p.selling_price || 0),
                 costPrice: Number(p.cost_price || 0),
+                mrp: Number(p.mrp ?? p.selling_price ?? 0),
+                priceVariants: p.price_variants
+                  ? (typeof p.price_variants === 'string' ? JSON.parse(p.price_variants) : p.price_variants)
+                  : p.priceVariants || [
+                      {
+                        id: `pv_${p.id}_1`,
+                        name: 'Standard',
+                        sellingPrice: Number(p.selling_price || 0),
+                        mrp: Number(p.mrp ?? p.selling_price ?? 0),
+                        isDefault: true,
+                      },
+                    ],
+                sortOrder: Number(p.sort_order ?? p.sortOrder ?? 0),
                 stock: Number(p.stock || 0),
                 minStock: Number(p.min_stock || 5),
                 openingStock: Number(p.opening_stock ?? p.stock ?? 0),

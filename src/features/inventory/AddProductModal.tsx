@@ -5,7 +5,9 @@ import { brandService } from '../../services/brandService';
 import { useCategories } from '../../hooks/useCategories';
 import { useBrands } from '../../hooks/useBrands';
 import { getCategoryEmoji } from '../../constants/categoryIcons';
-import { Plus, X, Star } from 'lucide-react';
+import { generateId } from '../../lib/utils';
+import type { PriceVariant } from '../../types';
+import { Plus, X, Star, Trash2, Layers } from 'lucide-react';
 
 interface AddProductModalProps {
   isOpen: boolean;
@@ -13,6 +15,13 @@ interface AddProductModalProps {
   onSuccess?: () => void;
   defaultCategoryId?: string;
   defaultBrandId?: string;
+}
+
+interface CustomVariantFormItem {
+  id: string;
+  name: string;
+  sellingPrice: string;
+  mrp: string;
 }
 
 export const AddProductModal: React.FC<AddProductModalProps> = ({
@@ -28,6 +37,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [selectedBrandId, setSelectedBrandId] = useState<string>('');
   const [sellingPrice, setSellingPrice] = useState<string>('');
+  const [mrp, setMrp] = useState<string>('');
   const [costPrice, setCostPrice] = useState<string>('');
   const [stock, setStock] = useState<string>('20');
   const [minStock, setMinStock] = useState<string>('5');
@@ -35,6 +45,10 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
   const [sku, setSku] = useState<string>('');
   const [barcode, setBarcode] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Price Variants State
+  const [baseVariantName, setBaseVariantName] = useState('Standard');
+  const [customVariants, setCustomVariants] = useState<CustomVariantFormItem[]>([]);
 
   // Inline Add Brand state (Section 8: preserve entered product fields, create brand inline)
   const [isCreatingBrandInline, setIsCreatingBrandInline] = useState(false);
@@ -88,6 +102,28 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
     }
   };
 
+  const handleAddCustomVariant = () => {
+    setCustomVariants((prev) => [
+      ...prev,
+      {
+        id: generateId('pv'),
+        name: '',
+        sellingPrice: '',
+        mrp: '',
+      },
+    ]);
+  };
+
+  const handleRemoveCustomVariant = (id: string) => {
+    setCustomVariants((prev) => prev.filter((v) => v.id !== id));
+  };
+
+  const handleUpdateCustomVariant = (id: string, field: 'name' | 'sellingPrice' | 'mrp', value: string) => {
+    setCustomVariants((prev) =>
+      prev.map((v) => (v.id === id ? { ...v, [field]: value } : v))
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !sellingPrice || isSubmitting) return;
@@ -95,11 +131,37 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
     try {
       setIsSubmitting(true);
       const sell = parseFloat(sellingPrice) || 0;
+      const mrpVal = parseFloat(mrp) || sell;
       const cost = parseFloat(costPrice) || Math.round(sell * 0.8);
       const initialStock = parseInt(stock, 10) || 0;
       const minimumStock = parseInt(minStock, 10) || 5;
 
       const selectedCat = categories.find((c) => c.id === selectedCategoryId);
+
+      // Build price variants list (Base variant + custom variants)
+      const allVariants: PriceVariant[] = [
+        {
+          id: generateId('pv'),
+          name: baseVariantName.trim() || 'Standard',
+          sellingPrice: sell,
+          mrp: mrpVal,
+          costPrice: cost,
+          isDefault: true,
+        },
+        ...customVariants
+          .filter((v) => v.name.trim() && v.sellingPrice)
+          .map((v) => {
+            const vSell = parseFloat(v.sellingPrice) || sell;
+            return {
+              id: v.id || generateId('pv'),
+              name: v.name.trim(),
+              sellingPrice: vSell,
+              mrp: parseFloat(v.mrp) || vSell,
+              costPrice: cost,
+              isDefault: false,
+            };
+          }),
+      ];
 
       await inventoryService.addProduct({
         name: name.trim(),
@@ -107,7 +169,9 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
         brandId: selectedBrandId || null,
         category: selectedCat ? selectedCat.name : 'Others',
         sellingPrice: sell,
+        mrp: mrpVal,
         costPrice: cost,
+        priceVariants: allVariants,
         stock: initialStock,
         minStock: minimumStock,
         isFavorite,
@@ -119,7 +183,10 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
       // Reset
       setName('');
       setSellingPrice('');
+      setMrp('');
       setCostPrice('');
+      setBaseVariantName('Standard');
+      setCustomVariants([]);
       setStock('20');
       setMinStock('5');
       setIsFavorite(false);
@@ -252,27 +319,46 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
           )}
         </div>
 
-        {/* Pricing: Selling Price & Cost Price */}
-        <div className="grid grid-cols-2 gap-3">
+        {/* Pricing: Selling Price, MRP, and Cost Price */}
+        <div className="grid grid-cols-3 gap-2.5">
           <div>
             <label className="block text-xs font-black text-slate-700 mb-1">
-              Selling Price (₹) *
+              Selling (₹) *
             </label>
             <input
               type="number"
               required
               min="0"
               step="1"
-              placeholder="e.g. 20"
+              placeholder="e.g. 18"
               value={sellingPrice}
-              onChange={(e) => setSellingPrice(e.target.value)}
-              className="w-full h-11 px-3.5 bg-slate-50 border border-slate-200 rounded-xl text-base font-black text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => {
+                const val = e.target.value;
+                if (!mrp || mrp === sellingPrice) setMrp(val);
+                setSellingPrice(val);
+              }}
+              className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-base font-black text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div>
             <label className="block text-xs font-black text-slate-700 mb-1">
-              Cost Price (₹) *
+              MRP (₹)
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              placeholder="e.g. 20"
+              value={mrp}
+              onChange={(e) => setMrp(e.target.value)}
+              className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-base font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-black text-slate-700 mb-1">
+              Cost (₹) *
             </label>
             <input
               type="number"
@@ -282,9 +368,102 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
               placeholder="e.g. 15"
               value={costPrice}
               onChange={(e) => setCostPrice(e.target.value)}
-              className="w-full h-11 px-3.5 bg-slate-50 border border-slate-200 rounded-xl text-base font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-base font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+        </div>
+
+        {/* Price Variants Section */}
+        <div className="p-3 bg-slate-50 border border-slate-200/90 rounded-2xl space-y-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <Layers className="w-4 h-4 text-blue-600" />
+              <span className="text-xs font-black text-slate-800">
+                Price Variants ({1 + customVariants.length})
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleAddCustomVariant}
+              className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer bg-white border border-blue-200 px-2 py-1 rounded-lg hover:bg-blue-50"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Variant</span>
+            </button>
+          </div>
+
+          {/* Base Variant (Always Present) */}
+          <div className="p-2.5 bg-white border border-slate-200 rounded-xl flex items-center justify-between gap-2 shadow-2xs">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 shrink-0">
+                Default
+              </span>
+              <input
+                type="text"
+                value={baseVariantName}
+                onChange={(e) => setBaseVariantName(e.target.value)}
+                placeholder="Standard / Regular"
+                className="text-xs font-bold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 focus:outline-none px-1 py-0.5 flex-1 min-w-[70px]"
+              />
+            </div>
+            <div className="flex items-center gap-3 text-xs shrink-0">
+              <span className="font-extrabold text-blue-700">
+                Selling: ₹{sellingPrice || 0}
+              </span>
+              <span className="text-slate-500 font-semibold">
+                MRP: ₹{mrp || sellingPrice || 0}
+              </span>
+            </div>
+          </div>
+
+          {/* Custom Added Variants */}
+          {customVariants.map((v, i) => (
+            <div key={v.id} className="p-2.5 bg-white border border-slate-200 rounded-xl space-y-2 shadow-2xs">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-bold text-slate-500">
+                  Variant #{i + 2}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveCustomVariant(v.id)}
+                  className="text-slate-400 hover:text-rose-600 p-1 rounded transition-colors cursor-pointer"
+                  title="Remove variant"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div className="col-span-1">
+                  <input
+                    type="text"
+                    placeholder="e.g. Half / Packet"
+                    value={v.name}
+                    onChange={(e) => handleUpdateCustomVariant(v.id, 'name', e.target.value)}
+                    className="w-full h-8 px-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <input
+                    type="number"
+                    placeholder="Sell ₹"
+                    value={v.sellingPrice}
+                    onChange={(e) => handleUpdateCustomVariant(v.id, 'sellingPrice', e.target.value)}
+                    className="w-full h-8 px-2 text-xs font-bold text-blue-700 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <input
+                    type="number"
+                    placeholder="MRP ₹"
+                    value={v.mrp}
+                    onChange={(e) => handleUpdateCustomVariant(v.id, 'mrp', e.target.value)}
+                    className="w-full h-8 px-2 text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Stock & Minimum Stock */}

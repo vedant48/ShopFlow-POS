@@ -27,11 +27,23 @@ export type ProductCategory =
   | 'Water'
   | 'Other';
 
+export interface PriceVariant {
+  id: string;
+  name: string; // e.g. "Standard", "Half", "Full", "Small", "Packet", "100g"
+  sellingPrice: number; // in INR ₹
+  mrp?: number; // in INR ₹
+  costPrice?: number; // in INR ₹
+  isDefault?: boolean; // true if this is the base/default variant
+}
+
 export interface Product extends BaseRecord {
   name: string;
   emoji?: string;
   sellingPrice: number; // in INR ₹
   costPrice: number; // in INR ₹
+  mrp?: number; // Maximum Retail Price in INR ₹
+  priceVariants?: PriceVariant[]; // Price variants list (always includes default base variant)
+  sortOrder?: number; // Custom sorting order within category / shop
   stock: number;
   minStock: number;
   openingStock?: number;
@@ -87,6 +99,8 @@ export interface SaleItem extends BaseRecord {
   productId: string;
   productName: string;
   productEmoji: string;
+  variantId?: string;
+  variantName?: string;
   quantity: number;
   unitPrice: number;
   sellingPrice?: number; // Preserved selling price at the time of sale
@@ -159,6 +173,7 @@ export interface SyncQueueItem extends BaseRecord {
 export interface CartItem {
   product: Product;
   quantity: number;
+  selectedVariant?: PriceVariant; // Specific price variant chosen for this cart entry
 }
 
 // Unified Ledger Item for Customer Details History

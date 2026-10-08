@@ -10,6 +10,7 @@ import { StockAuditModal } from '../features/inventory/StockAuditModal';
 import { PurchasesHistoryModal } from '../features/inventory/PurchasesHistoryModal';
 import { CategoryManagementModal } from '../features/inventory/CategoryManagementModal';
 import { BrandManagementModal } from '../features/inventory/BrandManagementModal';
+import { ProductReorderModal } from '../features/inventory/ProductReorderModal';
 import { useCategories } from '../hooks/useCategories';
 import { useBrands } from '../hooks/useBrands';
 import { getCategoryEmoji } from '../constants/categoryIcons';
@@ -34,6 +35,7 @@ import {
   FolderTree,
   Tag,
   Settings,
+  ArrowUpDown,
 } from 'lucide-react';
 
 export const InventoryPage: React.FC = () => {
@@ -55,6 +57,21 @@ export const InventoryPage: React.FC = () => {
   // Search & Filter state
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'lowStock' | 'outOfStock' | 'archived'>('all');
+  type SortOption =
+    | 'custom'
+    | 'name-asc'
+    | 'name-desc'
+    | 'price-asc'
+    | 'price-desc'
+    | 'mrp-asc'
+    | 'mrp-desc'
+    | 'stock-asc'
+    | 'stock-desc';
+  const [sortBy, setSortBy] = useState<SortOption>('custom');
+
+  // Reorder modal state
+  const [reorderProductsList, setReorderProductsList] = useState<Product[] | null>(null);
+  const [reorderModalTitle, setReorderModalTitle] = useState('Reorder Products');
 
   // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -70,6 +87,33 @@ export const InventoryPage: React.FC = () => {
   // Active vs Archived split
   const activeProducts = allProducts.filter((p) => p.active !== false);
   const archivedProducts = allProducts.filter((p) => p.active === false);
+
+  // Sorting helper
+  const sortProducts = (list: Product[], sort: SortOption): Product[] => {
+    return [...list].sort((a, b) => {
+      switch (sort) {
+        case 'name-asc':
+          return a.name.localeCompare(b.name);
+        case 'name-desc':
+          return b.name.localeCompare(a.name);
+        case 'price-asc':
+          return a.sellingPrice - b.sellingPrice;
+        case 'price-desc':
+          return b.sellingPrice - a.sellingPrice;
+        case 'mrp-asc':
+          return (a.mrp ?? a.sellingPrice) - (b.mrp ?? b.sellingPrice);
+        case 'mrp-desc':
+          return (b.mrp ?? b.sellingPrice) - (a.mrp ?? a.sellingPrice);
+        case 'stock-asc':
+          return a.stock - b.stock;
+        case 'stock-desc':
+          return b.stock - a.stock;
+        case 'custom':
+        default:
+          return (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.name.localeCompare(b.name);
+      }
+    });
+  };
 
   // Lookups
   const categoryMap = useMemo(() => {
@@ -117,6 +161,11 @@ export const InventoryPage: React.FC = () => {
     });
   }, [activeProducts, selectedCategoryId, selectedCategory]);
 
+  const sortedCategoryProducts = useMemo(
+    () => sortProducts(currentCategoryProducts, sortBy),
+    [currentCategoryProducts, sortBy]
+  );
+
   // Flat Search filtered list
   const query = searchTerm.trim().toLowerCase();
   const flatList = filterMode === 'archived' ? archivedProducts : activeProducts;
@@ -139,6 +188,11 @@ export const InventoryPage: React.FC = () => {
     }
     return true;
   });
+
+  const sortedFlatProducts = useMemo(
+    () => sortProducts(filteredFlatProducts, sortBy),
+    [filteredFlatProducts, sortBy]
+  );
 
   // Render Product Card (Section 25: Product name, selling price, current stock, low stock state. NO product icons)
   const renderProductCard = (product: Product) => {
@@ -171,6 +225,11 @@ export const InventoryPage: React.FC = () => {
                 {isArchived && (
                   <span className="text-[10px] px-1.5 py-0.2 bg-slate-200 text-slate-700 font-bold rounded">
                     Archived
+                  </span>
+                )}
+                {product.priceVariants && product.priceVariants.length > 1 && (
+                  <span className="text-[10px] px-1.5 py-0.2 bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold rounded">
+                    {product.priceVariants.length} variants
                   </span>
                 )}
                 {product.isFavorite && (
@@ -211,9 +270,21 @@ export const InventoryPage: React.FC = () => {
               <span className="text-[10px] uppercase font-bold text-slate-400 block">
                 Selling Price
               </span>
-              <span className="text-base font-extrabold text-blue-600">
-                {formatCurrency(product.sellingPrice)}
-              </span>
+              <div className="flex items-baseline gap-1.5 flex-wrap">
+                <span className="text-base font-extrabold text-blue-600">
+                  {formatCurrency(product.sellingPrice)}
+                </span>
+                {product.mrp && product.mrp > product.sellingPrice && (
+                  <span className="text-xs font-semibold text-slate-400 line-through">
+                    {formatCurrency(product.mrp)}
+                  </span>
+                )}
+              </div>
+              {product.mrp && product.mrp > product.sellingPrice && (
+                <span className="text-[10px] font-bold text-emerald-600 block">
+                  Save {formatCurrency(product.mrp - product.sellingPrice)}
+                </span>
+              )}
             </div>
 
             <div className="text-right">
@@ -520,6 +591,18 @@ export const InventoryPage: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
+                    onClick={() => {
+                      setReorderProductsList(currentCategoryProducts);
+                      setReorderModalTitle(`Reorder ${selectedCategory.name} Products`);
+                    }}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl cursor-pointer"
+                  >
+                    <ArrowUpDown className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Reorder</span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => setManagingBrandCategory(selectedCategory)}
                     className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl cursor-pointer"
                   >
@@ -574,13 +657,13 @@ export const InventoryPage: React.FC = () => {
                   </div>
 
                   {/* Direct Products in this category (without brand) */}
-                  {currentCategoryProducts.filter((p) => !p.brandId).length > 0 && (
+                  {sortedCategoryProducts.filter((p) => !p.brandId).length > 0 && (
                     <div className="space-y-2">
                       <span className="text-xs font-black text-slate-600 uppercase tracking-wider block px-1">
                         Direct Products (Without Brand)
                       </span>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {currentCategoryProducts
+                        {sortedCategoryProducts
                           .filter((p) => !p.brandId)
                           .map((product) => renderProductCard(product))}
                       </div>
@@ -591,12 +674,12 @@ export const InventoryPage: React.FC = () => {
                 /* Case 2: Category WITHOUT brands (e.g. Gutka -> Vimal, Rajshree directly) */
                 <div className="space-y-2">
                   <span className="text-xs font-black text-slate-600 uppercase tracking-wider block px-1">
-                    Products ({currentCategoryProducts.length})
+                    Products ({sortedCategoryProducts.length})
                   </span>
 
-                  {currentCategoryProducts.length > 0 ? (
+                  {sortedCategoryProducts.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {currentCategoryProducts.map((product) => renderProductCard(product))}
+                      {sortedCategoryProducts.map((product) => renderProductCard(product))}
                     </div>
                   ) : (
                     <div className="text-center py-10 bg-white rounded-2xl border border-dashed border-slate-200 p-6 space-y-2">
@@ -647,21 +730,36 @@ export const InventoryPage: React.FC = () => {
                   </h2>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(true)}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl cursor-pointer self-start sm:self-auto"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add Product in {selectedBrand.name}</span>
-                </button>
+                <div className="flex items-center gap-2 self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const brandProds = currentCategoryProducts.filter((p) => p.brandId === selectedBrand.id);
+                      setReorderProductsList(brandProds);
+                      setReorderModalTitle(`Reorder ${selectedBrand.name} Products`);
+                    }}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl cursor-pointer"
+                  >
+                    <ArrowUpDown className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Reorder</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Product in {selectedBrand.name}</span>
+                  </button>
+                </div>
               </div>
 
               {/* Products in Brand */}
               <div className="space-y-2">
-                {currentCategoryProducts.filter((p) => p.brandId === selectedBrand.id).length > 0 ? (
+                {sortedCategoryProducts.filter((p) => p.brandId === selectedBrand.id).length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {currentCategoryProducts
+                    {sortedCategoryProducts
                       .filter((p) => p.brandId === selectedBrand.id)
                       .map((product) => renderProductCard(product))}
                   </div>
@@ -774,9 +872,43 @@ export const InventoryPage: React.FC = () => {
             )}
           </div>
 
+          {/* Sort By & Reorder Toolbar */}
+          <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-white border border-slate-200/90 rounded-2xl shadow-2xs">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-500">Sort By:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="h-8 px-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              >
+                <option value="custom">Custom Order (Default)</option>
+                <option value="name-asc">Name: A → Z</option>
+                <option value="name-desc">Name: Z → A</option>
+                <option value="price-asc">Price: Low → High</option>
+                <option value="price-desc">Price: High → Low</option>
+                <option value="mrp-asc">MRP: Low → High</option>
+                <option value="mrp-desc">MRP: High → Low</option>
+                <option value="stock-asc">Stock: Low → High</option>
+                <option value="stock-desc">Stock: High → Low</option>
+              </select>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setReorderProductsList(activeProducts);
+                setReorderModalTitle('Reorder All Products');
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+            >
+              <ArrowUpDown className="w-3.5 h-3.5 text-slate-500" />
+              <span>Reorder Products</span>
+            </button>
+          </div>
+
           {/* Product Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {filteredFlatProducts.length === 0 ? (
+            {sortedFlatProducts.length === 0 ? (
               <div className="col-span-full py-12 text-center bg-white rounded-2xl border border-slate-200 p-6">
                 <Layers className="w-10 h-10 text-slate-300 mx-auto mb-2" />
                 <p className="text-sm font-bold text-slate-700">No matching products found</p>
@@ -785,7 +917,7 @@ export const InventoryPage: React.FC = () => {
                 </p>
               </div>
             ) : (
-              filteredFlatProducts.map((product) => renderProductCard(product))
+              sortedFlatProducts.map((product) => renderProductCard(product))
             )}
           </div>
         </div>
@@ -814,6 +946,13 @@ export const InventoryPage: React.FC = () => {
         category={managingBrandCategory}
         isOpen={!!managingBrandCategory}
         onClose={() => setManagingBrandCategory(null)}
+      />
+
+      <ProductReorderModal
+        isOpen={!!reorderProductsList}
+        onClose={() => setReorderProductsList(null)}
+        products={reorderProductsList || []}
+        title={reorderModalTitle}
       />
 
       <AddStockModal

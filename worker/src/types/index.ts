@@ -76,6 +76,9 @@ export interface ProductRow {
   emoji: string | null;
   selling_price: number;
   cost_price: number;
+  mrp?: number | null;
+  price_variants?: string | null;
+  sort_order?: number;
   stock: number;
   min_stock: number;
   opening_stock: number;

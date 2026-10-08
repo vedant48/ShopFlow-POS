@@ -1,16 +1,17 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import type { Product, CartItem } from '../../types';
+import type { Product, CartItem, PriceVariant } from '../../types';
 import { formatCurrency } from '../../lib/utils';
 import { Search, X, Star, Zap, Clock, ArrowLeft, ChevronRight } from 'lucide-react';
 import { useQuickItems } from '../../hooks/useQuickItems';
 import { useCategories } from '../../hooks/useCategories';
 import { useBrands } from '../../hooks/useBrands';
 import { getCategoryEmoji } from '../../constants/categoryIcons';
+import { VariantSelectionModal } from './VariantSelectionModal';
 
 interface QuickSaleGridProps {
   products: Product[];
   cart: CartItem[];
-  onAddToCart: (product: Product) => void;
+  onAddToCart: (product: Product, variant?: PriceVariant) => void;
 }
 
 export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
@@ -24,6 +25,9 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
   // Hierarchy Navigation State: null = root categories view; categoryId = category view; brandId = brand view
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedBrandId, setSelectedBrandId] = useState<string | null>(null);
+
+  // Variant selection modal state
+  const [variantModalProduct, setVariantModalProduct] = useState<Product | null>(null);
 
   // Categories & Brands live from Dexie (Section 16-19)
   const { categories } = useCategories({ activeOnly: true });
@@ -52,7 +56,8 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
   const cartQuantityMap = useMemo(() => {
     const map = new Map<string, number>();
     cart.forEach((item) => {
-      map.set(item.product.id, item.quantity);
+      const current = map.get(item.product.id) || 0;
+      map.set(item.product.id, current + item.quantity);
     });
     return map;
   }, [cart]);
@@ -127,7 +132,7 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
   // Products belonging to the currently selected category
   const categoryProducts = useMemo(() => {
     if (!selectedCategoryId) return [];
-    return products.filter((p) => {
+    const list = products.filter((p) => {
       if (p.active === false) return false;
       if (p.categoryId === selectedCategoryId) return true;
       // Fallback for older products matching by string category name
@@ -136,6 +141,9 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
       }
       return false;
     });
+    return list.sort(
+      (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.name.localeCompare(b.name)
+    );
   }, [products, selectedCategoryId, selectedCategory]);
 
   // In Category view: split products into brand products vs direct products (without brand)
@@ -167,12 +175,22 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
     }
   };
 
+  const handleProductClick = (product: Product) => {
+    if (product.stock <= 0) return;
+    if (product.priceVariants && product.priceVariants.length > 1) {
+      setVariantModalProduct(product);
+    } else {
+      onAddToCart(product);
+    }
+  };
+
   // Helper component to render a product card (NO product icons as per spec!)
   const renderProductCard = (product: Product) => {
     const inCartCount = cartQuantityMap.get(product.id) || 0;
     const isLowStock = product.stock <= product.minStock && product.stock > 0;
     const isOutOfStock = product.stock <= 0;
     const isFav = product.isFavorite === true;
+    const hasVariants = product.priceVariants && product.priceVariants.length > 1;
 
     // Resolve brand label for context if available
     const productBrand = product.brandId ? brandMap.get(product.brandId) : null;
@@ -188,12 +206,12 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
             : 'bg-white border-slate-200/90 hover:border-slate-300 tap-press'
         }`}
       >
-        {/* Main Touch Target: Clicking immediately adds +1 to cart */}
+        {/* Main Touch Target: Clicking immediately adds +1 to cart or opens variant selector if multi-variant */}
         <button
           type="button"
           disabled={isOutOfStock}
           onClick={() => {
-            if (!isOutOfStock) onAddToCart(product);
+            if (!isOutOfStock) handleProductClick(product);
           }}
           className={`absolute inset-0 w-full h-full rounded-2xl z-0 text-left cursor-pointer active:scale-[0.98] ${
             isOutOfStock ? 'cursor-not-allowed' : ''
@@ -244,9 +262,23 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
 
         {/* Price & Stock Indicator */}
         <div className="relative z-10 pointer-events-none mt-2 pt-2 border-t border-slate-100 flex items-baseline justify-between w-full">
-          <span className="text-base sm:text-lg font-black text-blue-600">
-            {formatCurrency(product.sellingPrice)}
-          </span>
+          <div>
+            <div className="flex items-baseline gap-1.5 flex-wrap">
+              <span className="text-base sm:text-lg font-black text-blue-600">
+                {formatCurrency(product.sellingPrice)}
+              </span>
+              {product.mrp && product.mrp > product.sellingPrice && (
+                <span className="text-xs font-semibold text-slate-400 line-through">
+                  {formatCurrency(product.mrp)}
+                </span>
+              )}
+            </div>
+            {hasVariants && (
+              <span className="text-[10px] font-bold text-indigo-600 block mt-0.5">
+                {product.priceVariants!.length} variants
+              </span>
+            )}
+          </div>
 
           <div className="text-right">
             {isOutOfStock ? (
@@ -382,7 +414,7 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
                           type="button"
                           disabled={isOut}
                           onClick={() => {
-                            if (!isOut) onAddToCart(prod);
+                            if (!isOut) handleProductClick(prod);
                           }}
                           className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-left shrink-0 transition-all select-none shadow-2xs active:scale-95 cursor-pointer ${
                             isOut
@@ -439,7 +471,7 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
                           type="button"
                           disabled={isOut}
                           onClick={() => {
-                            if (!isOut) onAddToCart(prod);
+                            if (!isOut) handleProductClick(prod);
                           }}
                           className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-left shrink-0 transition-all select-none shadow-2xs active:scale-95 cursor-pointer ${
                             isOut
@@ -658,6 +690,16 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
           )}
         </div>
       )}
+
+      {/* Variant Selection Modal */}
+      <VariantSelectionModal
+        isOpen={!!variantModalProduct}
+        onClose={() => setVariantModalProduct(null)}
+        product={variantModalProduct}
+        onSelectVariant={(product, variant) => {
+          onAddToCart(product, variant);
+        }}
+      />
     </div>
   );
 };

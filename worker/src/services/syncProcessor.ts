@@ -584,13 +584,19 @@ async function processSingleEvent(
 
       if (operation === 'CREATE') {
         if (!existing) {
+          const mrpVal = payload.mrp !== undefined ? Number(payload.mrp) : Number(payload.sellingPrice || 0);
+          const variantsJson = payload.priceVariants
+            ? (typeof payload.priceVariants === 'string' ? payload.priceVariants : JSON.stringify(payload.priceVariants))
+            : null;
+          const sortVal = Number(payload.sortOrder ?? payload.sort_order ?? 0);
+
           await db
             .prepare(
               `INSERT INTO products (
-                id, shop_id, name, emoji, selling_price, cost_price,
+                id, shop_id, name, emoji, selling_price, cost_price, mrp, price_variants, sort_order,
                 stock, min_stock, opening_stock, unit, category, category_id, brand_id, sku,
                 barcode, active, created_at, updated_at
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
             )
             .bind(
               entityId,
@@ -599,6 +605,9 @@ async function processSingleEvent(
               payload.emoji || '📦',
               Number(payload.sellingPrice || 0),
               Number(payload.costPrice || 0),
+              mrpVal,
+              variantsJson,
+              sortVal,
               Number(payload.stock || 0),
               Number(payload.minStock || 5),
               Number(payload.openingStock ?? payload.stock ?? 0),
@@ -617,6 +626,9 @@ async function processSingleEvent(
           // Last write wins
           const nextCatId = catId !== null ? catId : existing.category_id;
           const nextBrId = payload.brandId !== undefined ? payload.brandId : (payload.brand_id !== undefined ? payload.brand_id : existing.brand_id);
+          const variantsJson = payload.priceVariants
+            ? (typeof payload.priceVariants === 'string' ? payload.priceVariants : JSON.stringify(payload.priceVariants))
+            : null;
 
           await db
             .prepare(
@@ -625,6 +637,9 @@ async function processSingleEvent(
                 emoji = COALESCE(?, emoji),
                 selling_price = COALESCE(?, selling_price),
                 cost_price = COALESCE(?, cost_price),
+                mrp = COALESCE(?, mrp),
+                price_variants = COALESCE(?, price_variants),
+                sort_order = COALESCE(?, sort_order),
                 stock = COALESCE(?, stock),
                 min_stock = COALESCE(?, min_stock),
                 category = COALESCE(?, category),
@@ -641,6 +656,9 @@ async function processSingleEvent(
               payload.emoji ?? null,
               payload.sellingPrice !== undefined ? Number(payload.sellingPrice) : null,
               payload.costPrice !== undefined ? Number(payload.costPrice) : null,
+              payload.mrp !== undefined ? Number(payload.mrp) : null,
+              variantsJson,
+              payload.sortOrder !== undefined ? Number(payload.sortOrder) : (payload.sort_order !== undefined ? Number(payload.sort_order) : null),
               payload.stock !== undefined ? Number(payload.stock) : null,
               payload.minStock !== undefined ? Number(payload.minStock) : null,
               payload.category ?? null,
@@ -659,6 +677,9 @@ async function processSingleEvent(
         if (existing) {
           const nextCatId = catId !== null ? catId : existing.category_id;
           const nextBrId = payload.brandId !== undefined ? payload.brandId : (payload.brand_id !== undefined ? payload.brand_id : existing.brand_id);
+          const variantsJson = payload.priceVariants
+            ? (typeof payload.priceVariants === 'string' ? payload.priceVariants : JSON.stringify(payload.priceVariants))
+            : null;
 
           await db
             .prepare(
@@ -667,6 +688,9 @@ async function processSingleEvent(
                 emoji = COALESCE(?, emoji),
                 selling_price = COALESCE(?, selling_price),
                 cost_price = COALESCE(?, cost_price),
+                mrp = COALESCE(?, mrp),
+                price_variants = COALESCE(?, price_variants),
+                sort_order = COALESCE(?, sort_order),
                 stock = COALESCE(?, stock),
                 min_stock = COALESCE(?, min_stock),
                 category = COALESCE(?, category),
@@ -683,6 +707,9 @@ async function processSingleEvent(
               payload.emoji ?? null,
               payload.sellingPrice !== undefined ? Number(payload.sellingPrice) : null,
               payload.costPrice !== undefined ? Number(payload.costPrice) : null,
+              payload.mrp !== undefined ? Number(payload.mrp) : null,
+              variantsJson,
+              payload.sortOrder !== undefined ? Number(payload.sortOrder) : (payload.sort_order !== undefined ? Number(payload.sort_order) : null),
               payload.stock !== undefined ? Number(payload.stock) : null,
               payload.minStock !== undefined ? Number(payload.minStock) : null,
               payload.category ?? null,
