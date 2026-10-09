@@ -94,33 +94,23 @@
   border-radius: 9999px;
 }
 
-/* Enable sleek, accessible horizontal scrollbar specifically for quick horizontal scroll containers */
+/* Quick horizontal scroll containers: hide scroll navigator / scrollbar for clean UI while preserving touch/wheel/drag scroll */
 .quick-horizontal-scroll {
   overflow-x: auto;
   touch-action: pan-x pan-y !important;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
-  scrollbar-width: thin;
-  scrollbar-color: #CBD5E1 transparent;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 .quick-horizontal-scroll::-webkit-scrollbar {
-  height: 4px !important;
-  display: block !important;
+  display: none !important;
+  height: 0px !important;
+  width: 0px !important;
 }
 .quick-horizontal-scroll::-webkit-scrollbar:horizontal {
-  height: 4px !important;
-  display: block !important;
-}
-.quick-horizontal-scroll::-webkit-scrollbar-track {
-  background: rgba(241, 245, 249, 0.6);
-  border-radius: 9999px;
-}
-.quick-horizontal-scroll::-webkit-scrollbar-thumb {
-  background: #CBD5E1 !important;
-  border-radius: 9999px;
-}
-.quick-horizontal-scroll::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8 !important;
+  display: none !important;
+  height: 0px !important;
 }
 
 /* Pulse animation for quick-action feedback */
