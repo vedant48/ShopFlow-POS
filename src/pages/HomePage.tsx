@@ -155,6 +155,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
   // Collapsible stats on mobile to preserve vertical screen space for counter
   const [isStatsExpanded, setIsStatsExpanded] = useState(false);
 
+  React.useEffect(() => {
+    console.info('[diag][products] loading:change', {
+      loading: productsLoading,
+      count: products.length,
+    });
+  }, [productsLoading, products.length]);
+
   // Open Hold Order Modal
   const handleOpenHoldModal = () => {
     if (cart.length === 0 || isProcessingSale) return;

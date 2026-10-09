@@ -6,9 +6,20 @@ import { authService } from '../auth/authService';
 export function useProducts() {
   const products = useLiveQuery(async () => {
     const currentShopId = authService.getCurrentShopId();
-    return await db.products
-      .filter((p) => (p.shopId || 'shop_demo_001') === currentShopId)
-      .toArray();
+    console.info('[diag][products] query:start', { shopId: currentShopId });
+    try {
+      const result = await db.products
+        .filter((p) => (p.shopId || 'shop_demo_001') === currentShopId)
+        .toArray();
+      console.info('[diag][products] query:resolve', {
+        shopId: currentShopId,
+        count: result.length,
+      });
+      return result;
+    } catch (error) {
+      console.error('[diag][products] query:error', error);
+      return [];
+    }
   }, []);
 
   return {

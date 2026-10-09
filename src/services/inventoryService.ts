@@ -89,6 +89,11 @@ export const inventoryService = {
       updatedAt: now,
     };
 
+    console.info('[diag][add-product] dexie:transaction:start', {
+      productId: newProduct.id,
+      shopId,
+      initialStock,
+    });
     await db.transaction(
       'rw',
       [db.products, db.inventoryMovements, db.syncQueue],
@@ -131,6 +136,9 @@ export const inventoryService = {
         );
       }
     );
+    console.info('[diag][add-product] dexie:transaction:commit', {
+      productId: newProduct.id,
+    });
 
     return newProduct;
   },
