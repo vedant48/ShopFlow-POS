@@ -169,7 +169,16 @@ class SyncService {
     };
 
     await db.syncQueue.add(item);
-    this.notify();
+    console.info('[diag][sync] queue:enqueue', {
+      queueId: item.id,
+      entity: item.entity,
+      entityId: item.entityId,
+      shopId: item.shopId,
+      status: item.status,
+    });
+    queueMicrotask(() => {
+      void this.notify();
+    });
 
     // Trigger immediate async sync if online (debounced so multi-entity transactions batch together)
     if (typeof navigator !== 'undefined' && navigator.onLine) {
@@ -178,6 +187,7 @@ class SyncService {
       }
       this.enqueueDebounceTimer = setTimeout(() => {
         this.enqueueDebounceTimer = null;
+        console.info('[diag][sync] cloud:start', { trigger: 'enqueue_debounce' });
         this.syncPendingEvents();
       }, 50);
     }
@@ -241,6 +251,10 @@ class SyncService {
     failed: number;
     error?: string;
   }> {
+    console.info('[diag][sync] cloud:start', {
+      force,
+      targetShopId: targetShopId || null,
+    });
     // If offline, do nothing
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       return { success: false, synced: 0, failed: 0, error: 'Offline' };
@@ -252,7 +266,9 @@ class SyncService {
     }
 
     this.isSyncing = true;
-    this.notify();
+    queueMicrotask(() => {
+      void this.notify();
+    });
 
     let itemsToSync: SyncQueueItem[] = [];
 
@@ -283,7 +299,9 @@ class SyncService {
           // ignore
         }
         this.isSyncing = false;
-        this.notify();
+        queueMicrotask(() => {
+          void this.notify();
+        });
         return { success: true, synced: 0, failed: 0 };
       }
 
@@ -408,8 +426,14 @@ class SyncService {
       this.scheduleBackoffRetry(1);
       return { success: false, synced: 0, failed: 0, error: err?.message };
     } finally {
+      console.info('[diag][sync] cloud:finish', {
+        success: this.lastError === null,
+        lastError: this.lastError,
+      });
       this.isSyncing = false;
-      this.notify();
+      queueMicrotask(() => {
+        void this.notify();
+      });
 
       if (this.hasPendingSyncRequest) {
         this.hasPendingSyncRequest = false;

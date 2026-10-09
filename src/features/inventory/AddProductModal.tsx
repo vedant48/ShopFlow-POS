@@ -126,12 +126,24 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
     if (!name.trim() || !sellingPrice || isSubmitting) return;
 
     try {
+      console.info('[diag][add-product] submit:start', {
+        name: name.trim(),
+        selectedCategoryId: selectedCategoryId || null,
+        selectedBrandId: selectedBrandId || null,
+      });
       setIsSubmitting(true);
       const sell = parseFloat(sellingPrice) || 0;
       const mrpVal = parseFloat(mrp) || sell;
       const cost = parseFloat(costPrice) || Math.round(sell * 0.8);
       const initialStock = parseInt(stock, 10) || 0;
       const minimumStock = parseInt(minStock, 10) || 5;
+      console.info('[diag][add-product] validation:complete', {
+        sell,
+        mrpVal,
+        cost,
+        initialStock,
+        minimumStock,
+      });
 
       const selectedCat = categories.find((c) => c.id === selectedCategoryId);
 
@@ -182,11 +194,13 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
       setIsCreatingBrandInline(false);
       onSuccess?.();
       onClose();
+      console.info('[diag][add-product] submit:success');
     } catch (err) {
       console.error('Failed to add product', err);
       alert('Error creating product. Please try again.');
     } finally {
       setIsSubmitting(false);
+      console.info('[diag][add-product] submit:finished');
     }
   };
 
