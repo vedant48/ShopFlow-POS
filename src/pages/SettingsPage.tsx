@@ -30,7 +30,6 @@ import {
   AlertCircle,
   X,
   FileDown,
-  Trash2,
 } from 'lucide-react';
 import { getDeviceLabel } from '../auth/authStore';
 
@@ -210,10 +209,6 @@ export const SettingsPage: React.FC = () => {
   const [cloudPreviewError, setCloudPreviewError] = useState<string | null>(null);
   const [isRestoring, setIsRestoring] = useState(false);
   const [restoreNotice, setRestoreNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-
-  // Clear Test Data states
-  const [showClearDataConfirm, setShowClearDataConfirm] = useState(false);
-  const [isClearingData, setIsClearingData] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -438,22 +433,6 @@ export const SettingsPage: React.FC = () => {
     const res = await promptInstall();
     if (res === 'accepted') {
       setInstallSuccessNotice('ShopFlow was installed to your home screen!');
-    }
-  };
-
-  const handleClearAllTestData = async () => {
-    setIsClearingData(true);
-    try {
-      const { clearAllLocalTestData } = await import('../services/dataResetService');
-      await clearAllLocalTestData(shop?.id);
-      await loadCounts();
-      setShowClearDataConfirm(false);
-      setSyncFeedbackMessage('✓ All test data & stocks cleared. Starting fresh!');
-      setTimeout(() => setSyncFeedbackMessage(null), 4000);
-    } catch (err: any) {
-      alert(err?.message || 'Failed to clear test data');
-    } finally {
-      setIsClearingData(false);
     }
   };
 
@@ -737,8 +716,8 @@ export const SettingsPage: React.FC = () => {
                         {sess.deviceId && (
                           <>
                             <span className="text-slate-300">•</span>
-                            <span className="font-mono text-[10px] text-slate-400 truncate max-w-[140px]">
-                              ID: {sess.deviceId.slice(0, 16)}
+                            <span className="font-mono text-[10px] text-slate-400 max-w-[150px]">
+                              ID: {sess.deviceId}
                             </span>
                           </>
                         )}
@@ -1051,32 +1030,6 @@ export const SettingsPage: React.FC = () => {
             )}
           </div>
         </div>
-      </section>
-
-      {/* Danger Zone: Clear Test Data & Start Fresh */}
-      <section className="bg-white rounded-2xl border border-rose-200/90 p-5 shadow-xs space-y-3">
-        <div className="flex items-center justify-between border-b border-rose-100 pb-3">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-rose-600" />
-            <h3 className="font-bold text-slate-900 text-base">Clear Test Data & Start Fresh</h3>
-          </div>
-          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
-            Clean Start
-          </span>
-        </div>
-
-        <p className="text-xs text-slate-600 leading-relaxed">
-          Remove all test products, sample opening stocks, test sales, and customer balances from this device so you can start with a 100% fresh shop. Categories and login remain intact.
-        </p>
-
-        <button
-          type="button"
-          onClick={() => setShowClearDataConfirm(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-bold text-xs rounded-xl transition-all cursor-pointer tap-press"
-        >
-          <Trash2 className="w-4 h-4 text-rose-600" />
-          <span>Clear All Products & Test Data</span>
-        </button>
       </section>
 
       {/* App Version Info */}
@@ -1475,42 +1428,6 @@ export const SettingsPage: React.FC = () => {
                 className="flex-1 py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-sm transition-colors"
               >
                 Confirm Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Clear Test Data Confirmation Modal */}
-      {showClearDataConfirm && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-rose-200 space-y-4 animate-in fade-in zoom-in-95">
-            <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
-              <AlertTriangle className="w-6 h-6 text-rose-600" />
-            </div>
-
-            <div className="text-center space-y-1">
-              <h4 className="font-bold text-slate-900 text-lg">Clear All Test Data?</h4>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                This will reset all products, stock counts, customer balances, and sales to zero so you can start completely fresh. Default categories will be kept.
-              </p>
-            </div>
-
-            <div className="flex gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setShowClearDataConfirm(false)}
-                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={isClearingData}
-                onClick={handleClearAllTestData}
-                className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition-all cursor-pointer shadow-md shadow-rose-600/20"
-              >
-                {isClearingData ? 'Clearing...' : 'Yes, Clear All'}
               </button>
             </div>
           </div>
