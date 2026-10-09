@@ -421,7 +421,7 @@ export const OpenOrderDetailModal: React.FC<OpenOrderDetailModalProps> = ({
               className="text-xs font-black text-amber-600 hover:text-amber-700 flex items-center gap-1 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>+ ADD ITEMS</span>
+              <span>ADD ITEMS</span>
             </button>
           </div>
 
@@ -566,7 +566,7 @@ export const OpenOrderDetailModal: React.FC<OpenOrderDetailModalProps> = ({
             className="flex-1 h-13 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-sm rounded-2xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
           >
             <ShoppingBag className="w-4 h-4" />
-            <span>+ ADD ITEMS</span>
+            <span>ADD ITEMS</span>
           </button>
 
           <button

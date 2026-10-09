@@ -1,12 +1,165 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import type { Product, CartItem, PriceVariant } from '../../types';
 import { formatCurrency, getProductVariants } from '../../lib/utils';
-import { Search, X, Star, Zap, Clock, ArrowLeft, ChevronRight } from 'lucide-react';
+import { Search, X, Star, Zap, Clock, ArrowLeft, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useQuickItems } from '../../hooks/useQuickItems';
 import { useCategories } from '../../hooks/useCategories';
 import { useBrands } from '../../hooks/useBrands';
 import { getCategoryEmoji } from '../../constants/categoryIcons';
 import { VariantSelectionModal } from './VariantSelectionModal';
+
+/**
+ * Hook to provide smooth, multi-input horizontal scrolling:
+ * 1. Mobile / Touch swipe (enabled via CSS touch-action: pan-x pan-y)
+ * 2. Desktop mouse wheel: translates vertical wheel deltaY to horizontal scroll
+ * 3. Desktop mouse drag: allows click-and-drag panning without accidentally triggering item clicks
+ * 4. Header chevron controls: explicit left/right scroll buttons
+ */
+function useHorizontalScrollRow(dependencyKey?: string | number) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    const hasLeft = el.scrollLeft > 2;
+    const hasRight = el.scrollLeft + el.clientWidth < el.scrollWidth - 4;
+    setCanScrollLeft(hasLeft);
+    setCanScrollRight(hasRight);
+  }, []);
+
+  // Re-check scroll bounds when content or active tab changes
+  useEffect(() => {
+    checkScroll();
+  }, [dependencyKey, checkScroll]);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    checkScroll();
+
+    // Wheel event to translate vertical wheel into horizontal scroll on desktop
+    const onWheel = (e: WheelEvent) => {
+      // If user is already scrolling horizontally (e.g. trackpad swipe deltaX), let native take over
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+      if (e.deltaY === 0) return;
+
+      const canScrollInDir =
+        (e.deltaY > 0 && el.scrollLeft + el.clientWidth < el.scrollWidth - 2) ||
+        (e.deltaY < 0 && el.scrollLeft > 2);
+
+      if (canScrollInDir) {
+        e.preventDefault();
+        el.scrollLeft += e.deltaY;
+        checkScroll();
+      }
+    };
+
+    el.addEventListener('wheel', onWheel, { passive: false });
+    el.addEventListener('scroll', checkScroll, { passive: true });
+    window.addEventListener('resize', checkScroll);
+
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => checkScroll());
+      ro.observe(el);
+    }
+
+    return () => {
+      el.removeEventListener('wheel', onWheel);
+      el.removeEventListener('scroll', checkScroll);
+      window.removeEventListener('resize', checkScroll);
+      if (ro) ro.disconnect();
+    };
+  }, [checkScroll]);
+
+  // Mouse drag-to-scroll support
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const scrollStart = useRef(0);
+  const hasDragged = useRef(false);
+
+  const onMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.button !== 0 || !ref.current) return;
+    isDragging.current = true;
+    hasDragged.current = false;
+    startX.current = e.pageX;
+    scrollStart.current = ref.current.scrollLeft;
+  };
+
+  const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDragging.current || !ref.current) return;
+    const diff = e.pageX - startX.current;
+    if (Math.abs(diff) > 5) {
+      hasDragged.current = true;
+      e.preventDefault();
+    }
+    ref.current.scrollLeft = scrollStart.current - diff;
+    checkScroll();
+  };
+
+  const onMouseUp = () => {
+    isDragging.current = false;
+    setTimeout(() => {
+      hasDragged.current = false;
+    }, 50);
+  };
+
+  const onMouseLeave = () => {
+    isDragging.current = false;
+  };
+
+  const onClickCapture = (e: React.MouseEvent) => {
+    if (hasDragged.current) {
+      e.stopPropagation();
+      e.preventDefault();
+      hasDragged.current = false;
+    }
+  };
+
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      if (isDragging.current) {
+        isDragging.current = false;
+        setTimeout(() => {
+          hasDragged.current = false;
+        }, 50);
+      }
+    };
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+  }, []);
+
+  const scrollLeft = () => {
+    if (ref.current) {
+      ref.current.scrollBy({ left: -220, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = () => {
+    if (ref.current) {
+      ref.current.scrollBy({ left: 220, behavior: 'smooth' });
+    }
+  };
+
+  return {
+    ref,
+    canScrollLeft,
+    canScrollRight,
+    scrollLeft,
+    scrollRight,
+    containerProps: {
+      ref,
+      onMouseDown,
+      onMouseMove,
+      onMouseUp,
+      onMouseLeave,
+      onClickCapture,
+    },
+  };
+}
 
 interface QuickSaleGridProps {
   products: Product[];
@@ -305,6 +458,10 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
   // Quick horizontal items list (for Most Selling, Recent, Favorites)
   const currentQuickItems = quickSectionTab === 'frequent' ? frequentlySold : recentlySold;
 
+  // Horizontal scroll controllers for the quick option rows
+  const quickScroll = useHorizontalScrollRow(`${quickSectionTab}-${currentQuickItems.length}`);
+  const favScroll = useHorizontalScrollRow(`${favorites.length}`);
+
   return (
     <div className="space-y-3.5">
       {/* 1. Fast Search Field with Offline Immediate Filtering */}
@@ -401,11 +558,38 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
                       </button>
                     </div>
 
-                    <span className="text-[10px] font-bold text-slate-400">1-tap add</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-slate-400">1-tap add</span>
+                      <div className="flex items-center gap-0.5">
+                        <button
+                          type="button"
+                          onClick={quickScroll.scrollLeft}
+                          disabled={!quickScroll.canScrollLeft}
+                          aria-label="Scroll left"
+                          title="Scroll left"
+                          className="w-6 h-6 flex items-center justify-center rounded-lg bg-white border border-slate-200 hover:bg-slate-100 disabled:opacity-25 disabled:cursor-not-allowed transition-all text-slate-600 cursor-pointer shadow-2xs"
+                        >
+                          <ChevronLeft className="w-3.5 h-3.5 stroke-[2.5]" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={quickScroll.scrollRight}
+                          disabled={!quickScroll.canScrollRight}
+                          aria-label="Scroll right"
+                          title="Scroll right"
+                          className="w-6 h-6 flex items-center justify-center rounded-lg bg-white border border-slate-200 hover:bg-slate-100 disabled:opacity-25 disabled:cursor-not-allowed transition-all text-slate-600 cursor-pointer shadow-2xs"
+                        >
+                          <ChevronRight className="w-3.5 h-3.5 stroke-[2.5]" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Horizontal chips */}
-                  <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-0.5 pt-0.5">
+                  <div
+                    {...quickScroll.containerProps}
+                    className="quick-horizontal-scroll flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 cursor-grab active:cursor-grabbing select-none"
+                  >
                     {currentQuickItems.map((prod) => {
                       const inCart = cartQuantityMap.get(prod.id) || 0;
                       const isOut = prod.stock <= 0;
@@ -459,10 +643,37 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
                       <span>❤️</span>
                       <span>Favorites</span>
                     </div>
-                    <span className="text-[10px] font-bold text-amber-600/80">1-tap add</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-amber-600/80">1-tap add</span>
+                      <div className="flex items-center gap-0.5">
+                        <button
+                          type="button"
+                          onClick={favScroll.scrollLeft}
+                          disabled={!favScroll.canScrollLeft}
+                          aria-label="Scroll left"
+                          title="Scroll left"
+                          className="w-6 h-6 flex items-center justify-center rounded-lg bg-white/90 border border-amber-200 hover:bg-amber-100/60 disabled:opacity-25 disabled:cursor-not-allowed transition-all text-amber-800 cursor-pointer shadow-2xs"
+                        >
+                          <ChevronLeft className="w-3.5 h-3.5 stroke-[2.5]" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={favScroll.scrollRight}
+                          disabled={!favScroll.canScrollRight}
+                          aria-label="Scroll right"
+                          title="Scroll right"
+                          className="w-6 h-6 flex items-center justify-center rounded-lg bg-white/90 border border-amber-200 hover:bg-amber-100/60 disabled:opacity-25 disabled:cursor-not-allowed transition-all text-amber-800 cursor-pointer shadow-2xs"
+                        >
+                          <ChevronRight className="w-3.5 h-3.5 stroke-[2.5]" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-0.5 pt-0.5">
+                  <div
+                    {...favScroll.containerProps}
+                    className="quick-horizontal-scroll flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 cursor-grab active:cursor-grabbing select-none"
+                  >
                     {favorites.map((prod) => {
                       const inCart = cartQuantityMap.get(prod.id) || 0;
                       const isOut = prod.stock <= 0;

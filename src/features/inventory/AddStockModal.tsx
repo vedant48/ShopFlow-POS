@@ -179,7 +179,7 @@ const AddStockForm: React.FC<AddStockFormProps> = ({ product, onClose, onSuccess
             className="text-xs font-bold text-blue-600 hover:text-blue-700 cursor-pointer flex items-center gap-1"
           >
             <UserPlus className="w-3.5 h-3.5" />
-            {showAddSupplier ? 'Cancel' : '+ New Supplier'}
+            {showAddSupplier ? 'Cancel' : 'New Supplier'}
           </button>
         </div>
 

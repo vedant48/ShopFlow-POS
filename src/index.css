@@ -64,9 +64,20 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  /* Explicitly allow horizontal touch swiping for buttons and interactive items inside horizontal scroll containers */
+  .quick-horizontal-scroll,
+  .quick-horizontal-scroll button,
+  .quick-horizontal-scroll [role="button"],
+  .horizontal-scroll-container,
+  .horizontal-scroll-container button,
+  [data-horizontal-scroll],
+  [data-horizontal-scroll] button {
+    touch-action: pan-x pan-y !important;
+  }
+
 }
 
-/* Custom scrollbar for mobile drawers / trays (vertical only, zero horizontal) */
+/* Custom scrollbar for mobile drawers / trays (vertical only, zero horizontal default) */
 ::-webkit-scrollbar {
   width: 4px;
   height: 0px;
@@ -81,6 +92,35 @@
 ::-webkit-scrollbar-thumb {
   background: #CBD5E1;
   border-radius: 9999px;
+}
+
+/* Enable sleek, accessible horizontal scrollbar specifically for quick horizontal scroll containers */
+.quick-horizontal-scroll {
+  overflow-x: auto;
+  touch-action: pan-x pan-y !important;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E1 transparent;
+}
+.quick-horizontal-scroll::-webkit-scrollbar {
+  height: 4px !important;
+  display: block !important;
+}
+.quick-horizontal-scroll::-webkit-scrollbar:horizontal {
+  height: 4px !important;
+  display: block !important;
+}
+.quick-horizontal-scroll::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.6);
+  border-radius: 9999px;
+}
+.quick-horizontal-scroll::-webkit-scrollbar-thumb {
+  background: #CBD5E1 !important;
+  border-radius: 9999px;
+}
+.quick-horizontal-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8 !important;
 }
 
 /* Pulse animation for quick-action feedback */
