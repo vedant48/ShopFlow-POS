@@ -6,7 +6,6 @@ import { CurrentSaleTray } from '../features/sales/CurrentSaleTray';
 import { UdhaarCustomerPickerModal } from '../features/sales/UdhaarCustomerPickerModal';
 import { PaymentMethodModal } from '../features/sales/PaymentMethodModal';
 import { AddExpenseModal } from '../features/expenses/AddExpenseModal';
-import { SaleDetailModal } from '../features/sales/SaleDetailModal';
 import { AddStockModal } from '../features/inventory/AddStockModal';
 import { SaleToast } from '../features/sales/SaleToast';
 import { MobileCartBottomBar } from '../features/sales/MobileCartBottomBar';
@@ -23,7 +22,6 @@ import {
   QrCode,
   BookOpen,
   ArrowUpRight,
-  CheckCircle2,
   AlertTriangle,
   AlertOctagon,
   Clock,
@@ -71,7 +69,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
   const [isUdhaarModalOpen, setIsUdhaarModalOpen] = useState(false);
   const [isPaymentMethodModalOpen, setIsPaymentMethodModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
-  const [selectedActivitySale, setSelectedActivitySale] = useState<Sale | null>(null);
   const [restockingProduct, setRestockingProduct] = useState<Product | null>(null);
   const [activeSaleToast, setActiveSaleToast] = useState<Sale | null>(null);
   const [heldOrderToast, setHeldOrderToast] = useState<{ name: string; total: number; order: OpenOrder } | null>(null);
@@ -593,10 +590,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
                   )}
                 </button>
               </div>
-
-              <span className="text-xs text-slate-500 font-semibold">
-                Tap product to add
-              </span>
             </div>
 
             {productsLoading ? (
@@ -612,52 +605,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
             )}
           </div>
 
-          {/* 7. Pending Udhaar Section (Requirement 7) */}
-          <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-2xs space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Pending Udhaar
-                </span>
-                <div className="text-lg font-black text-violet-900">
-                  {formatCurrency(stats.totalPendingUdhaar)}
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => onNavigateToTab?.('customers')}
-                className="text-xs font-bold text-violet-600 hover:text-violet-800 flex items-center gap-0.5 cursor-pointer"
-              >
-                <span>VIEW ALL</span>
-                <ArrowUpRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {stats.topDebtors.length > 0 ? (
-              <div className="divide-y divide-slate-100">
-                {stats.topDebtors.map((cust) => (
-                  <div
-                    key={cust.id}
-                    onClick={() => onNavigateToTab?.('customers')}
-                    className="py-2 flex items-center justify-between text-xs sm:text-sm cursor-pointer hover:bg-slate-50 -mx-1 px-1 rounded-lg transition-colors"
-                  >
-                    <span className="font-extrabold text-slate-800 truncate pr-2">
-                      {cust.name}
-                    </span>
-                    <span className="font-black text-violet-700 shrink-0">
-                      {formatCurrency(cust.balance || 0)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="py-2.5 px-3 bg-emerald-50 border border-emerald-200/80 rounded-xl flex items-center gap-2 text-emerald-800 text-xs font-bold">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>All payments collected ✓</span>
-              </div>
-            )}
-          </div>
 
           {/* 8. Low Stock Section (Requirement 8) */}
           {stats.lowStockProducts.length > 0 && (
@@ -699,79 +646,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
             </div>
           )}
 
-          {/* 5. Today's Activity (Requirement 5) */}
-          <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-2xs space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-blue-600" />
-                <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">
-                  Today's Activity
-                </h3>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => onNavigateToTab?.('sales')}
-                className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-0.5 cursor-pointer"
-              >
-                <span>View all</span>
-                <ArrowUpRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {stats.recentActivity.length === 0 ? (
-              <div className="py-6 text-center text-xs text-slate-400">
-                No activity recorded today yet.
-              </div>
-            ) : (
-              <div className="divide-y divide-slate-100">
-                {stats.recentActivity.map((sale) => {
-                  const timeStr = new Date(sale.createdAt).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  });
-                  const isUdhaar = sale.paymentStatus === 'UDHAAR';
-
-                  return (
-                    <div
-                      key={sale.id}
-                      onClick={() => setSelectedActivitySale(sale)}
-                      className="py-2.5 flex items-center justify-between text-xs cursor-pointer hover:bg-slate-50 -mx-1 px-1 rounded-lg transition-colors"
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <span className="text-slate-400 font-mono text-[11px] shrink-0">
-                          {timeStr}
-                        </span>
-
-                        <div className="min-w-0">
-                          <span className="font-bold text-slate-900 block truncate">
-                            {sale.customerName || (isUdhaar ? 'Udhaar Customer' : 'Counter Sale')}
-                          </span>
-                          <span
-                            className={`inline-block text-[10px] font-black uppercase px-1.5 py-0.2 rounded ${
-                              isUdhaar
-                                ? 'bg-violet-100 text-violet-800'
-                                : sale.paymentMethod === 'UPI'
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-emerald-100 text-emerald-800'
-                            }`}
-                          >
-                            {isUdhaar ? 'Udhaar' : sale.paymentMethod || 'Cash'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="text-right shrink-0">
-                        <span className="font-black text-slate-900 text-sm">
-                          {formatCurrency(sale.totalAmount)}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Right Column: Persistent Current Sale Tray (Desktop sticky) */}
@@ -831,11 +705,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
         onClose={() => setIsExpenseModalOpen(false)}
       />
 
-      <SaleDetailModal
-        sale={selectedActivitySale}
-        isOpen={!!selectedActivitySale}
-        onClose={() => setSelectedActivitySale(null)}
-      />
 
       <AddStockModal
         product={restockingProduct}

@@ -491,7 +491,7 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
                         }`}
                       >
                         <Zap className="w-3.5 h-3.5 stroke-[2.5]" />
-                        <span>⭐ Most Selling</span>
+                        <span>Most Selling</span>
                       </button>
 
                       <span className="text-slate-300">|</span>
@@ -509,8 +509,6 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
                         <span>Recently Sold</span>
                       </button>
                     </div>
-
-                    <span className="text-[10px] font-bold text-slate-400">1-tap add</span>
                   </div>
 
                   {/* Horizontal chips */}
@@ -571,7 +569,6 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
                       <span>❤️</span>
                       <span>Favorites</span>
                     </div>
-                    <span className="text-[10px] font-bold text-amber-600/80">1-tap add</span>
                   </div>
 
                   <div
@@ -747,7 +744,6 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
                     <span className="text-xs font-black text-slate-600 uppercase tracking-wider">
                       Products ({categoryProducts.length})
                     </span>
-                    <span className="text-[11px] font-bold text-slate-400">1-tap add</span>
                   </div>
 
                   {categoryProducts.length > 0 ? (

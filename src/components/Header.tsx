@@ -22,9 +22,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSettings, isSettingsActive
               <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-none truncate">
                 ShopFlow
               </h1>
-              <span className="text-[9px] uppercase font-bold tracking-wider px-1 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/60 shrink-0">
-                PWA
-              </span>
             </div>
             <p className="text-[10px] text-slate-500 font-medium truncate hidden xs:block">
               Offline POS

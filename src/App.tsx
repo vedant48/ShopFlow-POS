@@ -91,7 +91,7 @@ function AppContent() {
         {activeTab === 'inventory' && <InventoryPage />}
         {activeTab === 'customers' && <CustomersPage />}
         {activeTab === 'sales' && <SalesPage />}
-        {activeTab === 'reports' && <ReportsPage />}
+        {activeTab === 'reports' && <ReportsPage onNavigateToTab={handleTabChange} />}
         {activeTab === 'settings' && <SettingsPage />}
       </Suspense>
     </Layout>

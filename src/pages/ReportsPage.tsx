@@ -5,8 +5,11 @@ import {
   type DayStatsSummary,
   type TopProductSummary,
 } from '../services/dashboardService';
+import { useDashboardStats } from '../hooks/useShopData';
 import { EndOfDayModal } from '../features/reports/EndOfDayModal';
+import { SaleDetailModal } from '../features/sales/SaleDetailModal';
 import { formatCurrency } from '../lib/utils';
+import type { Sale } from '../types';
 import {
   TrendingUp,
   Banknote,
@@ -18,6 +21,9 @@ import {
   Receipt,
   Calendar,
   FileText,
+  Clock,
+  ArrowUpRight,
+  CheckCircle2,
 } from 'lucide-react';
 
 type DateFilterOption = 'today' | 'yesterday' | '7days' | 'month' | 'custom';
@@ -88,12 +94,24 @@ function getFilterDateRange(
   };
 }
 
-export const ReportsPage: React.FC = () => {
+interface ReportsPageProps {
+  onNavigateToTab?: (tab: 'home' | 'inventory' | 'customers' | 'sales' | 'reports' | 'settings') => void;
+}
+
+export const ReportsPage: React.FC<ReportsPageProps> = ({ onNavigateToTab }) => {
   const [filterOption, setFilterOption] = useState<DateFilterOption>('today');
   const [customDate, setCustomDate] = useState<string>(() =>
     new Date().toISOString().slice(0, 10)
   );
   const [isEndOfDayModalOpen, setIsEndOfDayModalOpen] = useState(false);
+  const [selectedActivitySale, setSelectedActivitySale] = useState<Sale | null>(null);
+
+  const { stats: dashboardStatsData } = useDashboardStats();
+  const dashboardStats = dashboardStatsData || {
+    totalPendingUdhaar: 0,
+    topDebtors: [],
+    recentActivity: [],
+  };
 
   // Compute date range ISO strings based on filterOption
   const { startDateIso, endDateIso, label } = getFilterDateRange(
@@ -397,6 +415,130 @@ export const ReportsPage: React.FC = () => {
               </div>
             )}
           </div>
+
+          {/* Real-time Status: Pending Udhaar & Today's Activity */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Pending Udhaar Section */}
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Pending Udhaar
+                  </span>
+                  <div className="text-lg font-black text-violet-900">
+                    {formatCurrency(dashboardStats.totalPendingUdhaar)}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => onNavigateToTab?.('customers')}
+                  className="text-xs font-bold text-violet-600 hover:text-violet-800 flex items-center gap-0.5 cursor-pointer"
+                >
+                  <span>VIEW ALL</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {dashboardStats.topDebtors.length > 0 ? (
+                <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto">
+                  {dashboardStats.topDebtors.map((cust) => (
+                    <div
+                      key={cust.id}
+                      onClick={() => onNavigateToTab?.('customers')}
+                      className="py-2 flex items-center justify-between text-xs sm:text-sm cursor-pointer hover:bg-slate-50 -mx-1 px-1 rounded-lg transition-colors"
+                    >
+                      <span className="font-extrabold text-slate-800 truncate pr-2">
+                        {cust.name}
+                      </span>
+                      <span className="font-black text-violet-700 shrink-0">
+                        {formatCurrency(cust.balance || 0)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-2.5 px-3 bg-emerald-50 border border-emerald-200/80 rounded-xl flex items-center gap-2 text-emerald-800 text-xs font-bold">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>All payments collected ✓</span>
+                </div>
+              )}
+            </div>
+
+            {/* Today's Activity */}
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-blue-600" />
+                  <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">
+                    Today's Activity
+                  </h3>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => onNavigateToTab?.('sales')}
+                  className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-0.5 cursor-pointer"
+                >
+                  <span>View all</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {dashboardStats.recentActivity.length === 0 ? (
+                <div className="py-6 text-center text-xs text-slate-400">
+                  No activity recorded today yet.
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto">
+                  {dashboardStats.recentActivity.map((sale) => {
+                    const timeStr = new Date(sale.createdAt).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    });
+                    const isUdhaar = sale.paymentStatus === 'UDHAAR';
+
+                    return (
+                      <div
+                        key={sale.id}
+                        onClick={() => setSelectedActivitySale(sale)}
+                        className="py-2.5 flex items-center justify-between text-xs cursor-pointer hover:bg-slate-50 -mx-1 px-1 rounded-lg transition-colors"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="text-slate-400 font-mono text-[11px] shrink-0">
+                            {timeStr}
+                          </span>
+
+                          <div className="min-w-0">
+                            <span className="font-bold text-slate-900 block truncate">
+                              {sale.customerName || (isUdhaar ? 'Udhaar Customer' : 'Counter Sale')}
+                            </span>
+                            <span
+                              className={`inline-block text-[10px] font-black uppercase px-1.5 py-0.2 rounded ${
+                                isUdhaar
+                                  ? 'bg-violet-100 text-violet-800'
+                                  : sale.paymentMethod === 'UPI'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : 'bg-emerald-100 text-emerald-800'
+                              }`}
+                            >
+                              {isUdhaar ? 'Udhaar' : sale.paymentMethod || 'Cash'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          <span className="font-black text-slate-900 text-sm">
+                            {formatCurrency(sale.totalAmount)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
         </>
       )}
 
@@ -405,6 +547,13 @@ export const ReportsPage: React.FC = () => {
         isOpen={isEndOfDayModalOpen}
         onClose={() => setIsEndOfDayModalOpen(false)}
         stats={currentStats}
+      />
+
+      {/* Sale Detail Modal for viewing sale items from Today's Activity */}
+      <SaleDetailModal
+        sale={selectedActivitySale}
+        isOpen={!!selectedActivitySale}
+        onClose={() => setSelectedActivitySale(null)}
       />
     </div>
   );
