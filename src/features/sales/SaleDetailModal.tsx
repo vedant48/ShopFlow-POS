@@ -138,7 +138,7 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                             {it.productName}
                           </span>
                           <span className="text-slate-400">
-                            {it.quantity} × {formatCurrency(it.unitPrice)}
+                            {it.quantity} × {formatCurrency(it.sellingPrice || it.unitPrice || (it.quantity > 0 ? Math.round(it.totalPrice / it.quantity) : 0))}
                           </span>
                         </div>
                       </div>

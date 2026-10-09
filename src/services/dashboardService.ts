@@ -138,9 +138,29 @@ export const dashboardService = {
         .filter((item) => saleIds.includes(item.saleId))
         .toArray();
 
+      // Product catalog lookup for fallback if historical costPrice was missing
+      const products = await db.products
+        .filter((p) => (p.shopId || 'shop_demo_001') === effectiveShopId)
+        .toArray();
+      const productMap = new Map(products.map((p) => [p.id, p]));
+
       for (const item of saleItems) {
-        const itemSellingPrice = item.sellingPrice || item.unitPrice || 0;
-        const itemCostPrice = item.costPrice !== undefined ? item.costPrice : (item.unitCost || 0);
+        let itemSellingPrice = item.sellingPrice || item.unitPrice || 0;
+        if (itemSellingPrice === 0 && item.totalPrice && item.quantity > 0) {
+          itemSellingPrice = Math.round(item.totalPrice / item.quantity);
+        }
+        if (itemSellingPrice === 0 && item.productId) {
+          itemSellingPrice = productMap.get(item.productId)?.sellingPrice || 0;
+        }
+
+        let itemCostPrice = item.costPrice !== undefined ? item.costPrice : (item.unitCost || 0);
+        if (itemCostPrice === 0 && item.productId) {
+          const prod = productMap.get(item.productId);
+          if (prod && prod.costPrice !== undefined && prod.costPrice > 0) {
+            itemCostPrice = prod.costPrice;
+          }
+        }
+
         const profitPerUnit = itemSellingPrice - itemCostPrice;
         estimatedProfit += profitPerUnit * item.quantity;
 
@@ -152,7 +172,7 @@ export const dashboardService = {
           revenue: 0,
         };
         existing.count += item.quantity;
-        existing.revenue += item.totalPrice;
+        existing.revenue += item.totalPrice || (itemSellingPrice * item.quantity);
         productSalesMap.set(item.productId, existing);
       }
     }

@@ -474,31 +474,41 @@ export const openOrderService = {
 
         const shopId = order.shopId || authService.getCurrentShopId();
 
-        // 2. Prepare items preserving captured unit price
-        const cartItems: CartItem[] = items.map((oi) => ({
-          product: {
-            id: oi.productId,
-            name: oi.productName,
-            emoji: oi.productEmoji || '📦',
-            sellingPrice: oi.unitPrice, // Preserves captured price
-            costPrice: 0,
-            stock: 999999, // Stock deduction handled safely in createSale
-            minStock: 0,
-            active: true,
-            createdAt: oi.createdAt,
-            updatedAt: oi.updatedAt,
-          } as Product,
-          quantity: oi.quantity,
-          selectedVariant: oi.variantId
-            ? {
-                id: oi.variantId,
-                name: oi.variantName || 'Standard',
-                price: oi.unitPrice,
-                sellingPrice: oi.unitPrice,
-                isDefault: false,
-              }
-            : undefined,
-        }));
+        // 2. Prepare items preserving captured unit price and product cost
+        const products = await db.products.toArray();
+        const prodMap = new Map(products.map((p) => [p.id, p]));
+
+        const cartItems: CartItem[] = items.map((oi) => {
+          const prod = prodMap.get(oi.productId);
+          const matchedVariant = prod?.priceVariants?.find((v) => v.id === oi.variantId);
+          const itemCost = matchedVariant?.costPrice ?? prod?.costPrice ?? 0;
+
+          return {
+            product: {
+              id: oi.productId,
+              name: oi.productName,
+              emoji: oi.productEmoji || '📦',
+              sellingPrice: oi.unitPrice, // Preserves captured price
+              costPrice: itemCost,
+              stock: prod ? prod.stock : 999999, // Stock deduction handled safely in createSale
+              minStock: prod?.minStock || 0,
+              active: true,
+              createdAt: oi.createdAt,
+              updatedAt: oi.updatedAt,
+            } as Product,
+            quantity: oi.quantity,
+            selectedVariant: oi.variantId
+              ? {
+                  id: oi.variantId,
+                  name: oi.variantName || 'Standard',
+                  price: oi.unitPrice,
+                  sellingPrice: oi.unitPrice,
+                  costPrice: itemCost,
+                  isDefault: false,
+                }
+              : undefined,
+          };
+        });
 
         // 3. Create the finalized Sale through existing saleService logic
         const sale = await saleService.createSale({

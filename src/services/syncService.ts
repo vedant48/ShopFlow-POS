@@ -103,8 +103,47 @@ class SyncService {
 
     // Initial sync check on startup
     setTimeout(() => {
+      this.repairCorruptedSaleItems();
       this.syncPendingEvents();
     }, 1000);
+  }
+
+  // Repair locally stored sale items that had missing unitPrice/costPrice due to sync mapping
+  async repairCorruptedSaleItems(): Promise<void> {
+    try {
+      const items = await db.saleItems.toArray();
+      const corrupted = items.filter(
+        (i) =>
+          (!i.unitPrice && !i.sellingPrice && i.totalPrice > 0) ||
+          (i.costPrice === undefined && (!i.unitCost || i.unitCost === 0))
+      );
+      if (corrupted.length === 0) return;
+
+      const products = await db.products.toArray();
+      const productMap = new Map(products.map((p) => [p.id, p]));
+
+      for (const item of corrupted) {
+        let price = item.sellingPrice || item.unitPrice || 0;
+        if (price === 0 && item.totalPrice && item.quantity > 0) {
+          price = Math.round(item.totalPrice / item.quantity);
+        }
+        let cost = item.costPrice !== undefined ? item.costPrice : (item.unitCost || 0);
+        if (cost === 0 && item.productId) {
+          const prod = productMap.get(item.productId);
+          if (prod && prod.costPrice !== undefined && prod.costPrice > 0) {
+            cost = prod.costPrice;
+          }
+        }
+        await db.saleItems.update(item.id, {
+          unitPrice: price,
+          sellingPrice: price,
+          unitCost: cost,
+          costPrice: cost,
+        });
+      }
+    } catch (err) {
+      console.warn('repairCorruptedSaleItems error:', err);
+    }
   }
 
   // Enqueue a local business action for synchronization
@@ -678,6 +717,11 @@ class SyncService {
           // 4. Sale Items
           if (data.saleItems && data.saleItems.length > 0) {
             for (const si of data.saleItems) {
+              const unitPrice = Number(si.selling_price ?? si.unit_price ?? si.sellingPrice ?? si.unitPrice ?? 0);
+              const unitCost = Number(si.cost_price ?? si.unit_cost ?? si.costPrice ?? si.unitCost ?? 0);
+              const quantity = Number(si.quantity || 1);
+              const totalPrice = Number(si.total_price ?? si.totalPrice ?? (unitPrice * quantity));
+
               await db.saleItems.put({
                 id: si.id,
                 shopId: targetShopId,
@@ -685,10 +729,14 @@ class SyncService {
                 productId: si.product_id || si.productId,
                 productName: si.product_name || si.productName || 'Product',
                 productEmoji: si.product_emoji || si.productEmoji || '📦',
-                quantity: Number(si.quantity || 1),
-                unitPrice: Number(si.unit_price ?? si.unitPrice ?? 0),
-                totalPrice: Number(si.total_price ?? si.totalPrice ?? 0),
-                unitCost: Number(si.unit_cost ?? si.unitCost ?? 0),
+                variantId: si.variant_id || si.variantId || undefined,
+                variantName: si.variant_name || si.variantName || undefined,
+                quantity,
+                unitPrice,
+                sellingPrice: unitPrice,
+                unitCost,
+                costPrice: unitCost,
+                totalPrice,
                 createdAt: si.created_at || si.createdAt || new Date().toISOString(),
                 updatedAt: si.updated_at || si.updatedAt || new Date().toISOString(),
               });
@@ -787,6 +835,8 @@ class SyncService {
           }
         }
       );
+
+      await this.repairCorruptedSaleItems();
 
       this.lastSyncedAt = new Date().toISOString();
       try {

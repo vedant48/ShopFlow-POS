@@ -206,12 +206,14 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
         updatedAt: oi.updatedAt,
       };
 
+      const matchedVariant = prod.priceVariants?.find((v) => v.id === oi.variantId);
       const variant: PriceVariant | undefined = oi.variantId
         ? {
             id: oi.variantId,
             name: oi.variantName || 'Variant',
             price: oi.unitPrice,
             sellingPrice: oi.unitPrice,
+            costPrice: matchedVariant?.costPrice ?? prod.costPrice ?? 0,
             isDefault: false,
           }
         : undefined;
