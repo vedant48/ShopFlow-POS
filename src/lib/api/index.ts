@@ -164,6 +164,32 @@ class ApiClient {
     });
   }
 
+  async getSessions(): Promise<{
+    sessions: Array<{
+      id: string;
+      deviceId: string;
+      deviceName?: string | null;
+      createdAt: string;
+      expiresAt: string;
+      isCurrent: boolean;
+    }>;
+  }> {
+    return this.request('/auth/sessions');
+  }
+
+  async terminateSession(sessionId: string): Promise<{ success: boolean; message?: string }> {
+    return this.request('/auth/sessions/terminate', {
+      method: 'POST',
+      body: JSON.stringify({ sessionId }),
+    });
+  }
+
+  async terminateAllOtherSessions(): Promise<{ success: boolean; message?: string; terminatedCount?: number }> {
+    return this.request('/auth/sessions/terminate-all-others', {
+      method: 'POST',
+    });
+  }
+
   // -------------------------------------------------------------
   // Health & Core Sync Endpoints
   // -------------------------------------------------------------

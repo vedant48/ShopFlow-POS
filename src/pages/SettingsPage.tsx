@@ -10,6 +10,7 @@ import { authService } from '../auth/authService';
 import { DEFAULT_DEMO_SHOP_ID } from '../lib/api';
 import {
   Smartphone,
+  Laptop,
   CheckCircle2,
   Download,
   Upload,
@@ -31,6 +32,7 @@ import {
   FileDown,
   Trash2,
 } from 'lucide-react';
+import { getDeviceLabel } from '../auth/authStore';
 
 interface StorageCounts {
   products: number;
@@ -42,7 +44,15 @@ interface StorageCounts {
 }
 
 export const SettingsPage: React.FC = () => {
-  const { user, shop, logout, updateProfile } = useAuth();
+  const {
+    user,
+    shop,
+    logout,
+    updateProfile,
+    getSessions,
+    terminateSession,
+    terminateAllOtherSessions,
+  } = useAuth();
   const { isStandalone, hasPrompt, promptInstall } = useInstallPrompt();
   const {
     isOnline,
@@ -63,6 +73,28 @@ export const SettingsPage: React.FC = () => {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [, setProfileSuccess] = useState<string | null>(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  // Logged-in Devices & Sessions States
+  const [sessions, setSessions] = useState<Array<{
+    id: string;
+    deviceId: string;
+    deviceName?: string | null;
+    createdAt: string;
+    expiresAt: string;
+    isCurrent: boolean;
+  }>>([]);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+  const [sessionFeedback, setSessionFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [sessionToTerminate, setSessionToTerminate] = useState<{
+    id: string;
+    deviceId: string;
+    deviceName?: string | null;
+    createdAt: string;
+    expiresAt: string;
+    isCurrent: boolean;
+  } | null>(null);
+  const [showTerminateAllConfirm, setShowTerminateAllConfirm] = useState(false);
+  const [isTerminatingSession, setIsTerminatingSession] = useState(false);
 
   // Sync and Backup feedback
   const [syncFeedbackMessage, setSyncFeedbackMessage] = useState<string | null>(null);
@@ -98,6 +130,78 @@ export const SettingsPage: React.FC = () => {
   const [selectedFileValidation, setSelectedFileValidation] = useState<BackupValidationResult | null>(null);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
   const [isReadingFile, setIsReadingFile] = useState(false);
+
+  // Fetch logged-in devices
+  const fetchSessions = async () => {
+    try {
+      setIsLoadingSessions(true);
+      const list = await getSessions();
+      setSessions(list);
+    } catch (err: any) {
+      console.error('Failed to load device sessions', err);
+    } finally {
+      setIsLoadingSessions(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSessions();
+  }, []);
+
+  const handleConfirmTerminateSession = async () => {
+    if (!sessionToTerminate) return;
+    try {
+      setIsTerminatingSession(true);
+      const res = await terminateSession(sessionToTerminate.id);
+      if (res.success) {
+        setSessionFeedback({
+          type: 'success',
+          message: `Session terminated. That device has been logged out.`,
+        });
+        setSessionToTerminate(null);
+        await fetchSessions();
+      } else {
+        setSessionFeedback({
+          type: 'error',
+          message: res.error || 'Failed to terminate session. Please try again.',
+        });
+      }
+    } catch (err: any) {
+      setSessionFeedback({
+        type: 'error',
+        message: err?.message || 'Error terminating session.',
+      });
+    } finally {
+      setIsTerminatingSession(false);
+    }
+  };
+
+  const handleConfirmTerminateAllOthers = async () => {
+    try {
+      setIsTerminatingSession(true);
+      const res = await terminateAllOtherSessions();
+      if (res.success) {
+        setSessionFeedback({
+          type: 'success',
+          message: `Terminated all other active sessions. Only this device remains logged in.`,
+        });
+        setShowTerminateAllConfirm(false);
+        await fetchSessions();
+      } else {
+        setSessionFeedback({
+          type: 'error',
+          message: res.error || 'Failed to terminate other sessions.',
+        });
+      }
+    } catch (err: any) {
+      setSessionFeedback({
+        type: 'error',
+        message: err?.message || 'Error terminating other sessions.',
+      });
+    } finally {
+      setIsTerminatingSession(false);
+    }
+  };
   const [cloudPreview, setCloudPreview] = useState<{
     shopName?: string;
     counts?: Record<string, number>;
@@ -509,6 +613,178 @@ export const SettingsPage: React.FC = () => {
               </button>
             </div>
           </form>
+        )}
+      </section>
+
+      {/* ========================================================================= */}
+      {/* SECTION: LOGGED IN DEVICES & SESSIONS */}
+      {/* ========================================================================= */}
+      <section className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2">
+            <Laptop className="w-5 h-5 text-blue-600" />
+            <div>
+              <h3 className="font-bold text-slate-900 text-base leading-none">Logged in Devices</h3>
+              <p className="text-xs text-slate-500 mt-1">Manage active sessions connected to your shop account</p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            disabled={isLoadingSessions}
+            onClick={fetchSessions}
+            title="Refresh devices"
+            className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoadingSessions ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
+
+        {sessionFeedback && (
+          <div
+            className={`p-3 rounded-xl text-xs font-semibold flex items-center justify-between gap-2 ${
+              sessionFeedback.type === 'success'
+                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                : 'bg-rose-50 text-rose-800 border border-rose-200'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              {sessionFeedback.type === 'success' ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              ) : (
+                <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+              )}
+              <span>{sessionFeedback.message}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSessionFeedback(null)}
+              className="text-xs opacity-70 hover:opacity-100 cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {isLoadingSessions ? (
+          <div className="py-8 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+            <RefreshCw className="w-4 h-4 animate-spin text-blue-500" />
+            <span>Checking logged-in devices...</span>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {sessions.map((sess) => {
+              const isCurrent = sess.isCurrent;
+              const formattedDate = new Date(sess.createdAt).toLocaleDateString(undefined, {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              });
+
+              // Resolve friendly display name
+              const displayName = sess.deviceName
+                ? sess.deviceName
+                : isCurrent
+                ? `${getDeviceLabel()} (This Device)`
+                : 'Connected Device';
+
+              const isMobile =
+                displayName.toLowerCase().includes('phone') ||
+                displayName.toLowerCase().includes('android') ||
+                displayName.toLowerCase().includes('iphone');
+
+              return (
+                <div
+                  key={sess.id}
+                  className={`p-3.5 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                    isCurrent
+                      ? 'bg-blue-50/40 border-blue-200/80 shadow-2xs'
+                      : 'bg-slate-50/70 border-slate-200/80 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                        isCurrent
+                          ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
+                          : 'bg-white border border-slate-200 text-slate-600'
+                      }`}
+                    >
+                      {isMobile ? <Smartphone className="w-5 h-5" /> : <Laptop className="w-5 h-5" />}
+                    </div>
+
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="text-sm font-extrabold text-slate-900 truncate">
+                          {displayName}
+                        </h4>
+                        {isCurrent ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                            Current Device
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 text-[10px] font-bold">
+                            Active Session
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-1 flex-wrap">
+                        <span>Signed in: {formattedDate}</span>
+                        {sess.deviceId && (
+                          <>
+                            <span className="text-slate-300">•</span>
+                            <span className="font-mono text-[10px] text-slate-400 truncate max-w-[140px]">
+                              ID: {sess.deviceId.slice(0, 16)}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/50">
+                    {isCurrent ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowLogoutConfirm(true)}
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span>Log Out</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setSessionToTerminate(sess)}
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-300 text-rose-600 text-xs font-bold rounded-xl transition-all shadow-2xs cursor-pointer tap-press"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span>Terminate Session</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Terminate All Other Sessions Button */}
+            {sessions.filter((s) => !s.isCurrent).length > 0 && (
+              <div className="pt-2 flex items-center justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowTerminateAllConfirm(true)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+                >
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  <span>Terminate All Other Sessions ({sessions.filter((s) => !s.isCurrent).length})</span>
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </section>
 
@@ -1235,6 +1511,79 @@ export const SettingsPage: React.FC = () => {
                 className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition-all cursor-pointer shadow-md shadow-rose-600/20"
               >
                 {isClearingData ? 'Clearing...' : 'Yes, Clear All'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Terminate Specific Device Session Confirmation Dialog */}
+      {sessionToTerminate && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+            <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl font-bold border border-rose-200">
+              <LogOut className="w-6 h-6" />
+            </div>
+
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 tracking-tight">Terminate Device Session?</h3>
+              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                This will immediately log out <strong>{sessionToTerminate.deviceName || 'that device'}</strong>.
+                It will need to enter phone number and PIN to access this shop again.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setSessionToTerminate(null)}
+                className="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isTerminatingSession}
+                onClick={handleConfirmTerminateSession}
+                className="flex-1 py-2.5 px-4 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-sm transition-colors cursor-pointer"
+              >
+                {isTerminatingSession ? 'Terminating...' : 'Terminate Session'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Terminate All Other Sessions Confirmation Dialog */}
+      {showTerminateAllConfirm && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+            <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center text-xl font-bold border border-rose-200">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 tracking-tight">Terminate All Other Sessions?</h3>
+              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                All other devices currently logged into this shop will be logged out immediately. Only this current device will stay logged in.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowTerminateAllConfirm(false)}
+                className="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isTerminatingSession}
+                onClick={handleConfirmTerminateAllOthers}
+                className="flex-1 py-2.5 px-4 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-sm transition-colors cursor-pointer"
+              >
+                {isTerminatingSession ? 'Terminating...' : 'Yes, Terminate All'}
               </button>
             </div>
           </div>

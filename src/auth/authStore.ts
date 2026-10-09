@@ -28,6 +28,33 @@ export function getOrCreateDeviceId(): string {
   return deviceId;
 }
 
+export function getDeviceLabel(): string {
+  if (typeof navigator === 'undefined') return 'Web Device';
+  const ua = navigator.userAgent;
+  let os = 'Device';
+  if (ua.includes('Android')) os = 'Android Phone';
+  else if (ua.includes('iPhone')) os = 'iPhone';
+  else if (ua.includes('iPad')) os = 'iPad';
+  else if (ua.includes('Windows')) os = 'Windows PC';
+  else if (ua.includes('Macintosh')) os = 'Mac';
+  else if (ua.includes('Linux')) os = 'Linux';
+
+  let browser = 'Browser';
+  if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Chrome';
+  else if (ua.includes('Edg')) browser = 'Edge';
+  else if (ua.includes('Firefox')) browser = 'Firefox';
+  else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
+
+  const isStandalone = typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches;
+  return isStandalone ? `${os} App (PWA)` : `${os} · ${browser}`;
+}
+
+export function getFullDeviceId(): string {
+  const id = getOrCreateDeviceId();
+  const label = getDeviceLabel();
+  return `${id}|${label}`;
+}
+
 export function loadSavedSession(): AuthSession | null {
   if (typeof window === 'undefined') return null;
   try {

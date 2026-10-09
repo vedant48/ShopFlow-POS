@@ -1,6 +1,7 @@
 import type { AuthUser, AuthShop, AuthSession, AuthState } from './types';
 import {
   getOrCreateDeviceId,
+  getFullDeviceId,
   loadSavedSession,
   saveSession,
   clearSession,
@@ -150,7 +151,7 @@ class AuthService {
     phone: string,
     pin: string
   ): Promise<{ success: boolean; error?: string; user?: AuthUser; shop?: AuthShop; token?: string }> {
-    const deviceId = getOrCreateDeviceId();
+    const deviceId = getFullDeviceId();
     const pinHashLocal = await hashPinClient(pin);
     const cleanPhone = phone.replace(/\D/g, '');
 
@@ -243,7 +244,7 @@ class AuthService {
     pin: string;
     startWithSampleProducts?: boolean;
   }): Promise<{ success: boolean; error?: string; user?: AuthUser; shop?: AuthShop; token?: string }> {
-    const deviceId = getOrCreateDeviceId();
+    const deviceId = getFullDeviceId();
     const pinHashLocal = await hashPinClient(params.pin);
 
     try {
@@ -315,6 +316,69 @@ class AuthService {
       return { success: true };
     } catch (err: any) {
       return { success: false, error: err?.message || 'Failed to update shop profile' };
+    }
+  }
+
+  // 6. Get Active Logged-in Devices/Sessions
+  async getSessions(): Promise<Array<{
+    id: string;
+    deviceId: string;
+    deviceName?: string | null;
+    createdAt: string;
+    expiresAt: string;
+    isCurrent: boolean;
+  }>> {
+    const currentDeviceId = getOrCreateDeviceId();
+    try {
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        return [{
+          id: 'local_current',
+          deviceId: currentDeviceId,
+          deviceName: null,
+          createdAt: this.currentSession?.createdAt || new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 86400 * 30 * 1000).toISOString(),
+          isCurrent: true,
+        }];
+      }
+
+      const res = await api.getSessions();
+      if (res && Array.isArray(res.sessions)) {
+        return res.sessions.map((s) => ({
+          ...s,
+          isCurrent: s.isCurrent || s.deviceId === currentDeviceId,
+        }));
+      }
+      return [];
+    } catch (err) {
+      console.warn('Failed to fetch remote sessions, falling back to local session', err);
+      return [{
+        id: 'local_current',
+        deviceId: currentDeviceId,
+        deviceName: null,
+        createdAt: this.currentSession?.createdAt || new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 86400 * 30 * 1000).toISOString(),
+        isCurrent: true,
+      }];
+    }
+  }
+
+  // 7. Terminate a Session
+  async terminateSession(sessionId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const res = await api.terminateSession(sessionId);
+      return { success: res.success };
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Failed to terminate session' };
+    }
+  }
+
+  // 8. Terminate All Other Sessions
+  async terminateAllOtherSessions(): Promise<{ success: boolean; terminatedCount?: number; error?: string }> {
+    try {
+      const res = await api.terminateAllOtherSessions();
+      return { success: res.success, terminatedCount: res.terminatedCount };
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Failed to terminate other sessions' };
     }
   }
 }

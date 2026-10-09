@@ -377,5 +377,98 @@ export async function handleAuthRoutes(
     );
   }
 
+  // 8. GET /api/auth/sessions - List active logged in devices/sessions
+  if (path === '/api/auth/sessions' && method === 'GET') {
+    const { auth, errorResponse } = await authenticateRequest(request, env);
+    if (errorResponse) return errorResponse;
+
+    const now = new Date().toISOString();
+    const { results } = await env.DB
+      .prepare('SELECT id, device_id, created_at, expires_at FROM sessions WHERE user_id = ? AND expires_at > ? ORDER BY created_at DESC')
+      .bind(auth!.user.id, now)
+      .all<{ id: string; device_id: string; created_at: string; expires_at: string }>();
+
+    const currentDeviceId = auth!.tokenPayload.deviceId || '';
+    const currentRawId = currentDeviceId.split('|')[0];
+
+    const sessions = (results || []).map((s) => {
+      const [rawDevId, ...labelParts] = (s.device_id || '').split('|');
+      const deviceName = labelParts.join('|') || null;
+      const isCurrent = rawDevId === currentRawId;
+
+      return {
+        id: s.id,
+        deviceId: rawDevId || s.device_id,
+        deviceName,
+        createdAt: s.created_at,
+        expiresAt: s.expires_at,
+        isCurrent,
+      };
+    });
+
+    return new Response(
+      JSON.stringify({ sessions }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  // 9. DELETE /api/auth/sessions/:sessionId or POST /api/auth/sessions/terminate - Terminate specific session
+  if (
+    (path.startsWith('/api/auth/sessions/') && path !== '/api/auth/sessions/terminate-all-others' && path !== '/api/auth/sessions/terminate' && method === 'DELETE') ||
+    (path === '/api/auth/sessions/terminate' && method === 'POST')
+  ) {
+    const { auth, errorResponse } = await authenticateRequest(request, env);
+    if (errorResponse) return errorResponse;
+
+    let sessionId = '';
+    if (method === 'DELETE') {
+      sessionId = path.replace('/api/auth/sessions/', '').trim();
+    } else {
+      try {
+        const body: any = await request.json();
+        sessionId = body?.sessionId || '';
+      } catch {
+        // ignore
+      }
+    }
+
+    if (!sessionId) {
+      return new Response(JSON.stringify({ error: 'Session ID is required' }), { status: 400 });
+    }
+
+    await env.DB
+      .prepare('DELETE FROM sessions WHERE id = ? AND user_id = ?')
+      .bind(sessionId, auth!.user.id)
+      .run();
+
+    return new Response(
+      JSON.stringify({ success: true, message: 'Session terminated successfully' }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  // 10. POST /api/auth/sessions/terminate-all-others - Terminate all sessions except current device
+  if (path === '/api/auth/sessions/terminate-all-others' && method === 'POST') {
+    const { auth, errorResponse } = await authenticateRequest(request, env);
+    if (errorResponse) return errorResponse;
+
+    const currentDeviceId = auth!.tokenPayload.deviceId || '';
+    const currentRawId = currentDeviceId.split('|')[0];
+
+    const res = await env.DB
+      .prepare('DELETE FROM sessions WHERE user_id = ? AND device_id NOT LIKE ?')
+      .bind(auth!.user.id, `${currentRawId}%`)
+      .run();
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: 'All other sessions terminated successfully',
+        terminatedCount: res.meta?.changes ?? 0,
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
   return null;
 }

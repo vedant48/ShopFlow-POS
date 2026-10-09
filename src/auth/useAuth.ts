@@ -16,5 +16,8 @@ export function useAuth() {
     logout: authService.logout.bind(authService),
     checkPhone: authService.checkPhone.bind(authService),
     updateProfile: authService.updateProfile.bind(authService),
+    getSessions: authService.getSessions.bind(authService),
+    terminateSession: authService.terminateSession.bind(authService),
+    terminateAllOtherSessions: authService.terminateAllOtherSessions.bind(authService),
   };
 }
