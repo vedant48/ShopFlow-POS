@@ -7,7 +7,7 @@ import type { Sale } from '../types';
 import { Search, Receipt, ArrowUpRight, CheckCircle2, BookOpen } from 'lucide-react';
 
 export const SalesPage: React.FC = () => {
-  const { sales, isLoading } = useRecentSales(100);
+  const { sales, isLoading, error, retry } = useRecentSales(100);
   const { customers } = useCustomers();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'PAID' | 'UDHAAR'>('ALL');
@@ -104,7 +104,19 @@ export const SalesPage: React.FC = () => {
       </div>
 
       {/* Sales List */}
-      {isLoading ? (
+      {error ? (
+        <div className="p-8 text-center bg-white rounded-2xl border border-red-200 space-y-3 shadow-2xs">
+          <p className="text-sm font-semibold text-red-600 apple-tight">Failed to load sales history from database</p>
+          <p className="text-xs text-[#86868b]">{error.message}</p>
+          <button
+            type="button"
+            onClick={retry}
+            className="px-4 py-2 bg-[#0066cc] text-white text-xs font-semibold rounded-full cursor-pointer hover:bg-[#0055b3] transition-colors"
+          >
+            Retry Loading
+          </button>
+        </div>
+      ) : isLoading ? (
         <div className="p-8 text-center text-[#86868b] text-sm font-normal">Loading sales...</div>
       ) : filteredSales.length === 0 ? (
         <div className="p-12 text-center bg-white rounded-2xl border border-dashed border-[#d2d2d7]">

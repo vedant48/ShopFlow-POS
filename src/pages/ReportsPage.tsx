@@ -119,10 +119,21 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onNavigateToTab }) => 
     customDate
   );
 
-  // Reactive live query for selected date range stats
+  const [queryError, setQueryError] = useState<Error | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
+
+  // Reactive live query for selected date range stats with error handling
   const stats = useLiveQuery(async () => {
-    return await dashboardService.getDateRangeStats(startDateIso, endDateIso, label);
-  }, [startDateIso, endDateIso, label]);
+    try {
+      const res = await dashboardService.getDateRangeStats(startDateIso, endDateIso, label);
+      setQueryError(null);
+      return res;
+    } catch (err: any) {
+      console.error('Failed to load date range stats:', err);
+      setQueryError(err instanceof Error ? err : new Error(String(err)));
+      return undefined;
+    }
+  }, [startDateIso, endDateIso, label, retryKey]);
 
   const defaultStats: DayStatsSummary = {
     dateLabel: label,
@@ -142,7 +153,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onNavigateToTab }) => 
   };
 
   const currentStats = stats || defaultStats;
-  const isLoading = stats === undefined;
+  const isLoading = stats === undefined && !queryError;
 
   const maxProductCount =
     currentStats.topSellingProducts.length > 0
@@ -217,7 +228,19 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onNavigateToTab }) => 
         )}
       </div>
 
-      {isLoading ? (
+      {queryError ? (
+        <div className="p-8 text-center bg-white rounded-2xl border border-red-200 space-y-3 shadow-2xs">
+          <p className="text-sm font-semibold text-red-600 apple-tight">Failed to load analytics from database</p>
+          <p className="text-xs text-[#86868b]">{queryError.message}</p>
+          <button
+            type="button"
+            onClick={() => setRetryKey((k) => k + 1)}
+            className="px-4 py-2 bg-[#0066cc] text-white text-xs font-semibold rounded-full cursor-pointer hover:bg-[#0055b3] transition-colors"
+          >
+            Retry Loading
+          </button>
+        </div>
+      ) : isLoading ? (
         <div className="p-8 text-center text-[#86868b] text-xs font-normal">Loading report...</div>
       ) : (
         <>

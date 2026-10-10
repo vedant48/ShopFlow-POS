@@ -166,6 +166,12 @@ async function processSingleEvent(
             .run();
         }
       } else if (operation === 'DELETE') {
+        // Cascade: delete child sale_items first to satisfy foreign key constraints
+        await db
+          .prepare('DELETE FROM sale_items WHERE sale_id = ? AND shop_id = ?')
+          .bind(entityId, shopId)
+          .run();
+
         await db
           .prepare('DELETE FROM sales WHERE id = ? AND shop_id = ?')
           .bind(entityId, shopId)
@@ -210,6 +216,11 @@ async function processSingleEvent(
             )
             .run();
         }
+      } else if (operation === 'DELETE') {
+        await db
+          .prepare('DELETE FROM sale_items WHERE id = ? AND shop_id = ?')
+          .bind(entityId, shopId)
+          .run();
       }
       break;
     }

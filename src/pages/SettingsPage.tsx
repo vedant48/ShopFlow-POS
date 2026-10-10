@@ -271,7 +271,7 @@ export const SettingsPage: React.FC = () => {
     if (res.success) {
       setSyncFeedbackMessage('✓ Backup complete');
     } else {
-      setSyncFeedbackMessage("⚠️ Some changes couldn't be backed up.");
+      setSyncFeedbackMessage(res.message || "⚠️ Some changes couldn't be backed up.");
     }
 
     setSyncResultCounts({
@@ -859,6 +859,12 @@ export const SettingsPage: React.FC = () => {
                 <span className="text-slate-400 font-medium">Pending: </span>
                 <strong className="text-slate-800">{pendingCount} changes</strong>
               </div>
+              {failedCount > 0 && (
+                <div>
+                  <span className="text-amber-600 font-medium">Failed: </span>
+                  <strong className="text-amber-700">{failedCount} changes</strong>
+                </div>
+              )}
             </div>
           </div>
 

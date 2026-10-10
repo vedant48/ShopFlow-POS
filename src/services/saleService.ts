@@ -218,6 +218,36 @@ export const saleService = {
         const restoredCartItems: CartItem[] = [];
         const now = new Date().toISOString();
 
+        // 1. Identify existing syncQueue records for this sale
+        const existingSaleQueueItems = await db.syncQueue
+          .where('entity')
+          .anyOf(['sales', 'saleItems', 'inventoryMovements'])
+          .filter((item) => {
+            if (item.entity === 'sales') return item.entityId === saleId;
+            if (item.entity === 'saleItems') return (item.payload as any)?.saleId === saleId;
+            if (item.entity === 'inventoryMovements') {
+              return (item.payload as any)?.referenceId === saleId && (item.payload as any)?.type === 'SALE';
+            }
+            return false;
+          })
+          .toArray();
+
+        // Check if any creation events are in flight or already synced to the cloud
+        const hasInFlightOrSyncedEvents = existingSaleQueueItems.some(
+          (item) => item.status === 'SYNCING' || item.status === 'SYNCED'
+        );
+
+        // Cancel any pending or failed creation events that have not been successfully synced to the cloud
+        for (const item of existingSaleQueueItems) {
+          if (item.status === 'PENDING' || item.status === 'FAILED') {
+            await db.syncQueue.update(item.id, {
+              status: 'CANCELLED',
+              errorMessage: 'Sale undone locally before sync',
+              updatedAt: now,
+            });
+          }
+        }
+
         // Restore inventory for each item
         for (const item of saleItems) {
           const product = await db.products.get(item.productId);
@@ -259,6 +289,15 @@ export const saleService = {
             });
           }
 
+          // If the sale was already in-flight or synced to the cloud, enqueue compensating deletion for saleItem
+          if (hasInFlightOrSyncedEvents) {
+            await syncService.enqueue('saleItems', item.id, 'DELETE', {
+              id: item.id,
+              saleId: sale.id,
+              shopId: sale.shopId,
+            }, sale.shopId);
+          }
+
           // Delete sale item
           await db.saleItems.delete(item.id);
         }
@@ -284,12 +323,15 @@ export const saleService = {
         // Delete the sale record
         await db.sales.delete(saleId);
 
-        // Record sync cancellation
-        await syncService.enqueue('sales', saleId, 'DELETE', {
-          saleId,
-          saleNumber: sale.saleNumber,
-          undoneAt: now,
-        }, sale.shopId);
+        // If the sale was already in-flight or synced to the cloud, enqueue compensating deletion for sales
+        if (hasInFlightOrSyncedEvents) {
+          await syncService.enqueue('sales', saleId, 'DELETE', {
+            saleId,
+            saleNumber: sale.saleNumber,
+            undoneAt: now,
+            shopId: sale.shopId,
+          }, sale.shopId);
+        }
 
         return restoredCartItems;
       }

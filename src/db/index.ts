@@ -225,21 +225,12 @@ export class ShopFlowDatabase extends Dexie {
         });
       });
 
-    // Version 7: Wipe test products, test stocks, and test records to start fresh
+    // Version 7: Formerly cleared test data during development.
+    // Neutralized to guarantee zero data loss for devices upgrading from version 6 or lower.
     this.version(7)
       .stores({})
-      .upgrade(async (tx) => {
-        // Clear all test products, inventory movements, sales, customers, suppliers, payments, purchases, expenses
-        await tx.table('products').clear();
-        await tx.table('inventoryMovements').clear();
-        await tx.table('sales').clear();
-        await tx.table('saleItems').clear();
-        await tx.table('customers').clear();
-        await tx.table('suppliers').clear();
-        await tx.table('payments').clear();
-        await tx.table('purchases').clear();
-        await tx.table('expenses').clear();
-        await tx.table('syncQueue').clear();
+      .upgrade(() => {
+        // Safe no-op: preserves all existing records, balances, movements, and pending sync events
       });
 
     // Version 8: adds sortOrder, mrp, and priceVariants on products
@@ -276,6 +267,11 @@ export class ShopFlowDatabase extends Dexie {
     this.version(9).stores({
       openOrders: 'id, shopId, customerId, status, lastActivityAt, createdAt',
       openOrderItems: 'id, shopId, openOrderId, productId, createdAt',
+    });
+
+    // Version 10: Safe forward-only migration adding compound index on syncQueue for fast stats and batch sync
+    this.version(10).stores({
+      syncQueue: 'id, shopId, entity, status, [shopId+status], createdAt',
     });
   }
 }

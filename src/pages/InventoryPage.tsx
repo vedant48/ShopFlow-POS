@@ -39,8 +39,21 @@ import {
 } from 'lucide-react';
 
 export const InventoryPage: React.FC = () => {
-  // Live query of all products from Dexie
-  const rawProducts = useLiveQuery(() => db.products.toArray());
+  const [productQueryError, setProductQueryError] = useState<Error | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
+
+  // Live query of all products from Dexie with error resilience
+  const rawProducts = useLiveQuery(async () => {
+    try {
+      const prods = await db.products.toArray();
+      setProductQueryError(null);
+      return prods;
+    } catch (err: any) {
+      console.error('Failed to query products for inventory:', err);
+      setProductQueryError(err instanceof Error ? err : new Error(String(err)));
+      return undefined;
+    }
+  }, [retryKey]);
   const allProducts = rawProducts ?? [];
 
   // Live query of categories and brands
@@ -500,6 +513,21 @@ export const InventoryPage: React.FC = () => {
           <span>All Products List</span>
         </button>
       </div>
+
+      {/* Database Query Error Recovery Banner */}
+      {productQueryError && (
+        <div className="p-8 text-center bg-white rounded-2xl border border-red-200 space-y-3 shadow-2xs">
+          <p className="text-sm font-semibold text-red-600 apple-tight">Failed to load inventory from database</p>
+          <p className="text-xs text-[#86868b]">{productQueryError.message}</p>
+          <button
+            type="button"
+            onClick={() => setRetryKey((k) => k + 1)}
+            className="px-4 py-2 bg-[#0066cc] text-white text-xs font-semibold rounded-full cursor-pointer hover:bg-[#0055b3] transition-colors"
+          >
+            Retry Loading
+          </button>
+        </div>
+      )}
 
       {/* A. HIERARCHY VIEW (Section 24) */}
       {viewMode === 'hierarchy' && (

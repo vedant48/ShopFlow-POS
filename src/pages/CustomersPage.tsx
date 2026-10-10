@@ -8,7 +8,7 @@ import type { Customer } from '../types';
 import { Plus, Search, Phone, ArrowUpRight, IndianRupee, Pencil } from 'lucide-react';
 
 export const CustomersPage: React.FC = () => {
-  const { customers, isLoading } = useCustomers();
+  const { customers, isLoading, error, retry } = useCustomers();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'udhaarOnly'>('all');
 
@@ -123,7 +123,19 @@ export const CustomersPage: React.FC = () => {
       </div>
 
       {/* Customers List (Requirement 9 & 10) */}
-      {isLoading ? (
+      {error ? (
+        <div className="p-8 text-center bg-white rounded-2xl border border-red-200 space-y-3 shadow-2xs">
+          <p className="text-sm font-semibold text-red-600 apple-tight">Failed to load customers from database</p>
+          <p className="text-xs text-[#86868b]">{error.message}</p>
+          <button
+            type="button"
+            onClick={retry}
+            className="px-4 py-2 bg-[#0066cc] text-white text-xs font-semibold rounded-full cursor-pointer hover:bg-[#0055b3] transition-colors"
+          >
+            Retry Loading
+          </button>
+        </div>
+      ) : isLoading ? (
         <div className="p-8 text-center text-[#86868b] text-sm font-normal">
           Loading customers...
         </div>

@@ -1,7 +1,9 @@
+import Dexie from 'dexie';
 import { db } from '../db';
 import type { SyncQueueItem, SyncOperation, SyncStatus } from '../types';
 import { generateId } from '../lib/utils';
 import { api, DEFAULT_DEMO_SHOP_ID } from '../lib/api';
+import { diagnostics } from '../lib/instrumentation';
 
 // Fast local-first retry intervals: 1s, 2s, 5s (capped at 5s max, no 30s/60s stalls)
 const BACKOFF_INTERVALS = [1000, 2000, 5000];
@@ -22,6 +24,7 @@ class SyncService {
   private isSyncing = false;
   private hasPendingSyncRequest = false;
   private enqueueDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private notifyDebounceTimer: ReturnType<typeof setTimeout> | null = null;
   private lastSyncedAt: string | null =
     typeof localStorage !== 'undefined'
       ? localStorage.getItem('shopflow_last_successful_sync_at')
@@ -49,6 +52,10 @@ class SyncService {
       clearTimeout(this.enqueueDebounceTimer);
       this.enqueueDebounceTimer = null;
     }
+    if (this.notifyDebounceTimer) {
+      clearTimeout(this.notifyDebounceTimer);
+      this.notifyDebounceTimer = null;
+    }
     if (this.periodicInterval) {
       clearInterval(this.periodicInterval);
       this.periodicInterval = null;
@@ -60,15 +67,28 @@ class SyncService {
     this.listeners.clear();
   }
 
-  private async notify() {
-    const stats = await this.getStats();
-    for (const listener of this.listeners) {
-      try {
-        listener(stats);
-      } catch (err) {
-        console.error('Sync listener error:', err);
-      }
+  // Coalesced status notification decoupled from any active transaction PSD
+  private notify() {
+    if (this.notifyDebounceTimer) {
+      clearTimeout(this.notifyDebounceTimer);
     }
+    this.notifyDebounceTimer = setTimeout(() => {
+      this.notifyDebounceTimer = null;
+      Dexie.ignoreTransaction(async () => {
+        try {
+          const stats = await this.getStats();
+          for (const listener of this.listeners) {
+            try {
+              listener(stats);
+            } catch (err) {
+              console.error('Sync listener error:', err);
+            }
+          }
+        } catch (err) {
+          console.warn('SyncService notify error:', err);
+        }
+      });
+    }, 16);
   }
 
   // Setup automatic triggers (Section 15)
@@ -104,6 +124,7 @@ class SyncService {
     // Initial sync check on startup
     setTimeout(() => {
       this.repairCorruptedSaleItems();
+      this.reconcileUndoneSales();
       this.syncPendingEvents();
     }, 1000);
   }
@@ -146,7 +167,59 @@ class SyncService {
     }
   }
 
+  // Reconcile and transition syncQueue creation events whose parent sale was already undone locally
+  async reconcileUndoneSales(targetShopId?: string): Promise<number> {
+    return Dexie.ignoreTransaction(async () => {
+      try {
+        const currentShopId = targetShopId || api.getShopId();
+        const candidateEvents = await db.syncQueue
+          .where('status')
+          .anyOf('PENDING', 'FAILED')
+          .filter(
+            (i) =>
+              (i.shopId || DEFAULT_DEMO_SHOP_ID) === currentShopId &&
+              (i.entity === 'sales' || i.entity === 'saleItems' || i.entity === 'inventoryMovements') &&
+              i.operation === 'CREATE'
+          )
+          .toArray();
+
+        let count = 0;
+        for (const item of candidateEvents) {
+          let saleId: string | null = null;
+          if (item.entity === 'sales') {
+            saleId = item.entityId;
+          } else if (item.entity === 'saleItems') {
+            saleId = (item.payload as any)?.saleId || null;
+          } else if (item.entity === 'inventoryMovements' && (item.payload as any)?.type === 'SALE') {
+            saleId = (item.payload as any)?.referenceId || null;
+          }
+
+          if (saleId) {
+            const localSale = await db.sales.get(saleId);
+            if (!localSale) {
+              await db.syncQueue.update(item.id, {
+                status: 'CANCELLED' as SyncStatus,
+                errorMessage: 'Sale was undone locally - creation superseded',
+                updatedAt: new Date().toISOString(),
+              });
+              count++;
+            }
+          }
+        }
+        if (count > 0) {
+          this.notify();
+        }
+        return count;
+      } catch (err) {
+        console.warn('reconcileUndoneSales warning:', err);
+        return 0;
+      }
+    });
+  }
+
   // Enqueue a local business action for synchronization
+  // Preserves 100% atomicity by writing into db.syncQueue in the active transaction,
+  // but defers cloud sync and notification until transaction commits.
   async enqueue(
     entity: SyncQueueItem['entity'],
     entityId: string,
@@ -168,70 +241,91 @@ class SyncService {
       updatedAt: now,
     };
 
+    // 1. Atomic local write: add to syncQueue within caller's Dexie transaction
     await db.syncQueue.add(item);
-    this.notify();
 
-    // Trigger immediate async sync if online (debounced so multi-entity transactions batch together)
-    if (typeof navigator !== 'undefined' && navigator.onLine) {
-      if (this.enqueueDebounceTimer) {
-        clearTimeout(this.enqueueDebounceTimer);
-      }
-      this.enqueueDebounceTimer = setTimeout(() => {
-        this.enqueueDebounceTimer = null;
-        this.syncPendingEvents();
-      }, 50);
+    // 2. Transaction-aware post-commit hook:
+    // If inside an active business transaction, DO NOT execute reads or network requests.
+    // Wait for the transaction to explicitly complete/commit.
+    const currentTx = Dexie.currentTransaction;
+    if (currentTx) {
+      currentTx.on('complete', () => {
+        Dexie.ignoreTransaction(() => {
+          this.notify();
+          this.scheduleSyncAfterCommit();
+        });
+      });
+    } else {
+      Dexie.ignoreTransaction(() => {
+        this.notify();
+        this.scheduleSyncAfterCommit();
+      });
     }
 
     return item.id;
   }
 
-  // Get total pending + failed events
-  // Get total pending + failed events (Section 25)
-  async getPendingCount(targetShopId?: string): Promise<number> {
-    try {
-      const currentShopId = targetShopId || api.getShopId();
-      const items = await db.syncQueue
-        .where('status')
-        .anyOf('PENDING', 'FAILED')
-        .filter((item) => (item.shopId || DEFAULT_DEMO_SHOP_ID) === currentShopId)
-        .count();
-      return items;
-    } catch {
-      return 0;
+  private scheduleSyncAfterCommit() {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+    if (this.enqueueDebounceTimer) {
+      clearTimeout(this.enqueueDebounceTimer);
     }
+    this.enqueueDebounceTimer = setTimeout(() => {
+      this.enqueueDebounceTimer = null;
+      this.syncPendingEvents();
+    }, 100);
   }
 
-  // Get current detailed stats (Section 25)
-  async getStats(targetShopId?: string): Promise<SyncStats> {
-    try {
-      const currentShopId = targetShopId || api.getShopId();
-      const [pendingCount, failedCount, syncingCount, syncedCount] = await Promise.all([
-        db.syncQueue.where('status').equals('PENDING').filter((i) => (i.shopId || DEFAULT_DEMO_SHOP_ID) === currentShopId).count(),
-        db.syncQueue.where('status').equals('FAILED').filter((i) => (i.shopId || DEFAULT_DEMO_SHOP_ID) === currentShopId).count(),
-        db.syncQueue.where('status').equals('SYNCING').filter((i) => (i.shopId || DEFAULT_DEMO_SHOP_ID) === currentShopId).count(),
-        db.syncQueue.where('status').equals('SYNCED').filter((i) => (i.shopId || DEFAULT_DEMO_SHOP_ID) === currentShopId).count(),
-      ]);
+  // Get total pending + failed events (runs detached from caller transaction)
+  async getPendingCount(targetShopId?: string): Promise<number> {
+    return Dexie.ignoreTransaction(async () => {
+      try {
+        const currentShopId = targetShopId || api.getShopId();
+        const items = await db.syncQueue
+          .where('status')
+          .anyOf('PENDING', 'FAILED')
+          .filter((item) => (item.shopId || DEFAULT_DEMO_SHOP_ID) === currentShopId)
+          .count();
+        return items;
+      } catch {
+        return 0;
+      }
+    });
+  }
 
-      return {
-        pendingCount,
-        failedCount,
-        syncingCount,
-        syncedCount,
-        isSyncing: this.isSyncing,
-        lastSyncedAt: this.lastSyncedAt,
-        lastError: this.lastError,
-      };
-    } catch {
-      return {
-        pendingCount: 0,
-        failedCount: 0,
-        syncingCount: 0,
-        syncedCount: 0,
-        isSyncing: this.isSyncing,
-        lastSyncedAt: this.lastSyncedAt,
-        lastError: this.lastError,
-      };
-    }
+  // Get current detailed stats (runs detached from caller transaction)
+  async getStats(targetShopId?: string): Promise<SyncStats> {
+    return Dexie.ignoreTransaction(async () => {
+      try {
+        const currentShopId = targetShopId || api.getShopId();
+        const [pendingCount, failedCount, syncingCount, syncedCount] = await Promise.all([
+          db.syncQueue.where('status').equals('PENDING').filter((i) => (i.shopId || DEFAULT_DEMO_SHOP_ID) === currentShopId).count(),
+          db.syncQueue.where('status').equals('FAILED').filter((i) => (i.shopId || DEFAULT_DEMO_SHOP_ID) === currentShopId).count(),
+          db.syncQueue.where('status').equals('SYNCING').filter((i) => (i.shopId || DEFAULT_DEMO_SHOP_ID) === currentShopId).count(),
+          db.syncQueue.where('status').equals('SYNCED').filter((i) => (i.shopId || DEFAULT_DEMO_SHOP_ID) === currentShopId).count(),
+        ]);
+
+        return {
+          pendingCount,
+          failedCount,
+          syncingCount,
+          syncedCount,
+          isSyncing: this.isSyncing,
+          lastSyncedAt: this.lastSyncedAt,
+          lastError: this.lastError,
+        };
+      } catch {
+        return {
+          pendingCount: 0,
+          failedCount: 0,
+          syncingCount: 0,
+          syncedCount: 0,
+          isSyncing: this.isSyncing,
+          lastSyncedAt: this.lastSyncedAt,
+          lastError: this.lastError,
+        };
+      }
+    });
   }
 
   // Main synchronization engine (Section 14, 21, 22, 25)
@@ -246,18 +340,25 @@ class SyncService {
       return { success: false, synced: 0, failed: 0, error: 'Offline' };
     }
 
-    if (this.isSyncing && !force) {
+    // Strict single-flight lock: never allow overlapping runs, even when force=true
+    if (this.isSyncing) {
       this.hasPendingSyncRequest = true;
       return { success: false, synced: 0, failed: 0, error: 'Already syncing' };
     }
 
-    this.isSyncing = true;
-    this.notify();
+    return Dexie.ignoreTransaction(async () => {
+      const cycleId = 'sync_' + Math.random().toString(36).slice(2, 8);
+      this.isSyncing = true;
+      this.notify();
+      diagnostics.recordSyncStart(cycleId, 0);
 
-    let itemsToSync: SyncQueueItem[] = [];
+      let itemsToSync: SyncQueueItem[] = [];
 
     try {
       const currentShopId = targetShopId || api.getShopId();
+
+      // Safely reconcile any pending or failed events belonging to locally undone sales
+      await this.reconcileUndoneSales(currentShopId);
 
       // 1. Load pending and failed events strictly for active shop (Section 22, 25)
       if (force) {
@@ -276,15 +377,23 @@ class SyncService {
       }
 
       if (itemsToSync.length === 0) {
-        this.lastSyncedAt = new Date().toISOString();
-        try {
-          localStorage.setItem('shopflow_last_successful_sync_at', this.lastSyncedAt);
-        } catch {
-          // ignore
+        const remainingFailed = await db.syncQueue
+          .where('status')
+          .equals('FAILED')
+          .filter((item) => (item.shopId || DEFAULT_DEMO_SHOP_ID) === currentShopId)
+          .count();
+
+        if (remainingFailed === 0) {
+          this.lastSyncedAt = new Date().toISOString();
+          try {
+            localStorage.setItem('shopflow_last_successful_sync_at', this.lastSyncedAt);
+          } catch {
+            // ignore
+          }
         }
         this.isSyncing = false;
         this.notify();
-        return { success: true, synced: 0, failed: 0 };
+        return { success: remainingFailed === 0, synced: 0, failed: remainingFailed };
       }
 
       // Sort strictly by createdAt ascending and respect dependency tier (Section 15: Category -> Brand -> Product)
@@ -309,6 +418,10 @@ class SyncService {
         if (timeDiff !== 0) return timeDiff;
         const tierA = ENTITY_DEPENDENCY_TIER[a.entity] ?? 50;
         const tierB = ENTITY_DEPENDENCY_TIER[b.entity] ?? 50;
+        // For DELETE operations, child items must be deleted before parent entities
+        if (a.operation === 'DELETE' && b.operation === 'DELETE') {
+          return tierB - tierA;
+        }
         return tierA - tierB;
       });
 
@@ -337,18 +450,47 @@ class SyncService {
         for (const failure of response.failed) {
           const item = itemsToSync.find((i) => i.id === failure.id);
           const currentAttempts = (item?.attempts || 0) + 1;
-          await db.syncQueue.update(failure.id, {
-            status: 'FAILED',
-            attempts: currentAttempts,
-            lastAttemptAt: new Date().toISOString(),
-            errorMessage: failure.error,
-            updatedAt: new Date().toISOString(),
-          });
+
+          // Check if this failed event belongs to an already undone sale
+          let isUndoneSaleEvent = false;
+          let saleId: string | null = null;
+          if (item?.entity === 'sales' && item.operation === 'CREATE') {
+            saleId = item.entityId;
+          } else if (item?.entity === 'saleItems' && item.operation === 'CREATE') {
+            saleId = (item.payload as any)?.saleId || null;
+          } else if (item?.entity === 'inventoryMovements' && item.operation === 'CREATE' && (item.payload as any)?.type === 'SALE') {
+            saleId = (item.payload as any)?.referenceId || null;
+          }
+
+          if (saleId) {
+            const localSale = await db.sales.get(saleId);
+            if (!localSale) {
+              isUndoneSaleEvent = true;
+            }
+          }
+
+          if (isUndoneSaleEvent) {
+            await db.syncQueue.update(failure.id, {
+              status: 'CANCELLED' as SyncStatus,
+              attempts: currentAttempts,
+              lastAttemptAt: new Date().toISOString(),
+              errorMessage: `Sale undone locally: ${failure.error}`,
+              updatedAt: new Date().toISOString(),
+            });
+          } else {
+            await db.syncQueue.update(failure.id, {
+              status: 'FAILED',
+              attempts: currentAttempts,
+              lastAttemptAt: new Date().toISOString(),
+              errorMessage: failure.error,
+              updatedAt: new Date().toISOString(),
+            });
+          }
         }
       }
 
-      this.lastSyncedAt = new Date().toISOString();
       if (response.failed.length === 0) {
+        this.lastSyncedAt = new Date().toISOString();
         try {
           localStorage.setItem('shopflow_last_successful_sync_at', this.lastSyncedAt);
         } catch {
@@ -374,7 +516,6 @@ class SyncService {
       const isAuthError =
         err?.message?.includes('401') ||
         err?.message?.includes('Unauthorized') ||
-        err?.message?.includes('not found') ||
         err?.message?.includes('Authentication required');
 
       if (isAuthError) {
@@ -410,6 +551,7 @@ class SyncService {
     } finally {
       this.isSyncing = false;
       this.notify();
+      diagnostics.recordSyncEnd(cycleId, { synced: 0, failed: 0 });
 
       if (this.hasPendingSyncRequest) {
         this.hasPendingSyncRequest = false;
@@ -420,6 +562,7 @@ class SyncService {
         }, 50);
       }
     }
+    });
   }
 
   // Schedule next retry with exponential backoff (Section 35)
@@ -438,7 +581,6 @@ class SyncService {
 
   // Manual trigger for Settings screen (Section 16)
   async manualSync(): Promise<{ success: boolean; synced: number; failed: number; message: string }> {
-    const res = await this.syncPendingEvents(true);
     if (!navigator.onLine) {
       return {
         success: false,
@@ -448,7 +590,20 @@ class SyncService {
       };
     }
 
-    if (res.success) {
+    if (this.isSyncing) {
+      return {
+        success: false,
+        synced: 0,
+        failed: 0,
+        message: 'Sync already in progress. Please wait...',
+      };
+    }
+
+    const currentShopId = api.getShopId();
+    await this.reconcileUndoneSales(currentShopId);
+    const res = await this.syncPendingEvents(true);
+
+    if (res.success && res.failed === 0) {
       return {
         success: true,
         synced: res.synced,
@@ -461,7 +616,7 @@ class SyncService {
       success: false,
       synced: res.synced,
       failed: res.failed,
-      message: res.error || `${res.failed} items couldn't sync. Tap to retry.`,
+      message: res.error || `${res.failed} changes couldn't sync. Tap to retry.`,
     };
   }
 

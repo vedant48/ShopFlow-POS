@@ -146,7 +146,7 @@ export interface InventoryMovement extends BaseRecord {
 }
 
 export type SyncOperation = 'CREATE' | 'UPDATE' | 'DELETE';
-export type SyncStatus = 'PENDING' | 'SYNCING' | 'SYNCED' | 'FAILED';
+export type SyncStatus = 'PENDING' | 'SYNCING' | 'SYNCED' | 'FAILED' | 'CANCELLED';
 
 export interface SyncQueueItem extends BaseRecord {
   entity:
