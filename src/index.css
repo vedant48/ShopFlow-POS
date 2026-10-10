@@ -1,17 +1,31 @@
 @import "tailwindcss";
 
+@theme {
+  --color-apple-blue: #0066cc;
+  --color-apple-blue-focus: #0071e3;
+  --color-apple-ink: #1d1d1f;
+  --color-apple-muted: #6e6e73;
+  --color-apple-subtle: #86868b;
+  --color-apple-canvas: #ffffff;
+  --color-apple-parchment: #f5f5f7;
+  --color-apple-pearl: #fafafc;
+  --color-apple-hairline: #e5e5ea;
+  --color-apple-divider: #f0f0f2;
+}
+
 @layer base {
   :root {
-    --color-graphite: #101828;
-    --color-blue: #2563EB;
-    --color-soft-white: #F8FAFC;
-    --color-card-white: #FFFFFF;
-    --color-border: #E2E8F0;
-    --color-muted: #64748B;
-    --color-green: #14B8A6;
-    --color-violet: #7C3AED;
+    --color-graphite: #1d1d1f;
+    --color-blue: #0066cc;
+    --color-blue-focus: #0071e3;
+    --color-soft-white: #f5f5f7;
+    --color-card-white: #ffffff;
+    --color-border: #e5e5ea;
+    --color-muted: #6e6e73;
+    --color-green: #10b981;
+    --color-violet: #7c3aed;
 
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
     color: var(--color-graphite);
     background-color: var(--color-soft-white);
     -webkit-font-smoothing: antialiased;
@@ -21,8 +35,8 @@
   html {
     margin: 0;
     padding: 0;
-    background-color: #F8FAFC;
-    color: #101828;
+    background-color: #f5f5f7;
+    color: #1d1d1f;
     width: 100%;
     max-width: 100vw;
     overflow-x: hidden;
@@ -32,8 +46,8 @@
   body {
     margin: 0;
     padding: 0;
-    background-color: #F8FAFC;
-    color: #101828;
+    background-color: #f5f5f7;
+    color: #1d1d1f;
     width: 100%;
     max-width: 100vw;
     min-height: 100%;
@@ -124,3 +138,49 @@
   transform: scale(0.97);
   transition: transform 0.08s ease-in-out;
 }
+
+/* Apple Design Utilities */
+.apple-tight {
+  letter-spacing: -0.022em;
+}
+
+.apple-card {
+  background-color: #ffffff;
+  border: 1px solid #e5e5ea;
+  border-radius: 1.125rem; /* 18px - {rounded.lg} */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.apple-card:hover {
+  border-color: #d1d1d6;
+}
+
+.apple-pill {
+  border-radius: 9999px;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.apple-pill:active {
+  transform: scale(0.97);
+}
+
+.apple-chip {
+  border-radius: 9999px;
+  background-color: #f5f5f7;
+  color: #1d1d1f;
+  border: 1px solid #e5e5ea;
+  transition: all 0.15s ease;
+}
+.apple-chip:hover {
+  background-color: #e5e5ea;
+}
+.apple-chip-active {
+  background-color: #0066cc;
+  color: #ffffff;
+  border-color: #0066cc;
+}
+
+.apple-focus:focus-visible {
+  outline: 2px solid #0071e3;
+  outline-offset: 2px;
+}
+

@@ -207,12 +207,12 @@ export const InventoryPage: React.FC = () => {
     return (
       <div
         key={product.id}
-        className={`p-4 rounded-2xl bg-white border transition-all shadow-xs flex flex-col justify-between ${
+        className={`p-4 rounded-2xl bg-white border transition-all shadow-2xs flex flex-col justify-between ${
           isOutOfStock
-            ? 'border-rose-300 ring-1 ring-rose-100 bg-rose-50/20'
+            ? 'border-rose-200 bg-rose-50/20'
             : isLowStock
-            ? 'border-amber-300 bg-amber-50/20'
-            : 'border-slate-200/90 hover:border-slate-300'
+            ? 'border-amber-200 bg-amber-50/20'
+            : 'border-[#e5e5ea] hover:border-[#0066cc]/40'
         }`}
       >
         <div>
@@ -220,16 +220,16 @@ export const InventoryPage: React.FC = () => {
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 pr-1">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <h2 className="font-black text-slate-900 text-base leading-tight">
+                <h2 className="font-semibold text-[#1d1d1f] text-base leading-tight apple-tight">
                   {product.name}
                 </h2>
                 {isArchived && (
-                  <span className="text-[10px] px-1.5 py-0.2 bg-slate-200 text-slate-700 font-bold rounded">
+                  <span className="text-[10px] px-2 py-0.5 bg-[#e5e5ea] text-[#1d1d1f] font-medium rounded-full">
                     Archived
                   </span>
                 )}
                 {variants.length > 1 && (
-                  <span className="text-[10px] px-1.5 py-0.2 bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold rounded">
+                  <span className="text-[10px] px-2 py-0.5 bg-[#0066cc]/10 border border-[#0066cc]/20 text-[#0066cc] font-medium rounded-full">
                     {variants.length} price options
                   </span>
                 )}
@@ -240,15 +240,15 @@ export const InventoryPage: React.FC = () => {
                 )}
               </div>
 
-              <div className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-2 flex-wrap">
+              <div className="text-xs text-[#86868b] font-normal mt-1 flex items-center gap-2 flex-wrap">
                 {productBrand && (
-                  <span className="font-bold text-blue-600 bg-blue-50 px-1.5 py-0.2 rounded">
+                  <span className="font-semibold text-[#0066cc] bg-[#0066cc]/10 px-2 py-0.5 rounded-full text-[11px]">
                     {productBrand.name}
                   </span>
                 )}
                 <span>{product.category || 'Other'}</span>
                 {product.sku && (
-                  <span className="text-[11px] font-mono text-slate-400">
+                  <span className="text-[11px] font-mono text-[#86868b]">
                     SKU: {product.sku}
                   </span>
                 )}
@@ -258,7 +258,7 @@ export const InventoryPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setEditingProduct(product)}
-              className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer shrink-0"
+              className="p-1.5 text-[#86868b] hover:text-[#1d1d1f] hover:bg-[#f5f5f7] rounded-full transition-colors cursor-pointer shrink-0"
               title="Edit Product"
             >
               <Edit3 className="w-4 h-4" />
@@ -266,35 +266,35 @@ export const InventoryPage: React.FC = () => {
           </div>
 
           {/* Middle Info Grid: Selling Price, Stock Left, Cost Price */}
-          <div className="grid grid-cols-2 gap-2 mt-3.5 pt-3 border-t border-slate-100 text-xs">
+          <div className="grid grid-cols-2 gap-2 mt-3.5 pt-3 border-t border-[#f5f5f7] text-xs">
             <div>
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">
+              <span className="text-[10px] uppercase font-semibold text-[#86868b] block">
                 Selling Price
               </span>
               <div className="flex items-baseline gap-1.5 flex-wrap">
-                <span className="text-base font-extrabold text-blue-600">
+                <span className="text-base font-bold text-[#0066cc] apple-tight">
                   {formatCurrency(product.sellingPrice)}
                 </span>
                 {product.mrp && product.mrp > product.sellingPrice && (
-                  <span className="text-xs font-semibold text-slate-400 line-through">
+                  <span className="text-xs font-normal text-[#86868b] line-through">
                     {formatCurrency(product.mrp)}
                   </span>
                 )}
               </div>
               {product.mrp && product.mrp > product.sellingPrice && (
-                <span className="text-[10px] font-bold text-emerald-600 block">
+                <span className="text-[10px] font-semibold text-emerald-600 block">
                   Save {formatCurrency(product.mrp - product.sellingPrice)}
                 </span>
               )}
             </div>
 
             <div className="text-right">
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">
+              <span className="text-[10px] uppercase font-semibold text-[#86868b] block">
                 Stock Remaining
               </span>
               <div className="flex items-center justify-end gap-1 mt-0.5">
                 {isOutOfStock ? (
-                  <span className="inline-flex items-center gap-1 text-xs font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded-lg border border-rose-200">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
                     <AlertOctagon className="w-3 h-3" />
                     OUT OF STOCK
                   </span>
@@ -303,7 +303,7 @@ export const InventoryPage: React.FC = () => {
                     ⚠️ Low ({product.stock})
                   </Badge>
                 ) : (
-                  <span className="text-sm font-extrabold text-slate-800">
+                  <span className="text-sm font-semibold text-[#1d1d1f] apple-tight">
                     {product.stock} units
                   </span>
                 )}
@@ -311,19 +311,19 @@ export const InventoryPage: React.FC = () => {
             </div>
 
             <div className="mt-1">
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">
+              <span className="text-[10px] uppercase font-semibold text-[#86868b] block">
                 Cost Price
               </span>
-              <span className="text-xs font-bold text-slate-700">
+              <span className="text-xs font-medium text-[#1d1d1f]">
                 {formatCurrency(productCost)}
               </span>
             </div>
 
             <div className="text-right mt-1">
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">
+              <span className="text-[10px] uppercase font-semibold text-[#86868b] block">
                 Stock Value
               </span>
-              <span className="text-xs font-bold text-slate-700">
+              <span className="text-xs font-medium text-[#1d1d1f]">
                 {formatCurrency(itemStockValue)}
               </span>
             </div>
@@ -331,30 +331,30 @@ export const InventoryPage: React.FC = () => {
         </div>
 
         {/* Bottom Action Buttons [ + STOCK ] [ HISTORY ] [ Adjust ] */}
-        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-1.5">
+        <div className="mt-4 pt-3 border-t border-[#f5f5f7] flex items-center gap-1.5">
           <button
             type="button"
             onClick={() => setRestockingProduct(product)}
-            className="flex-1 py-2 px-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1 cursor-pointer tap-press"
+            className="flex-1 h-9 px-3 bg-[#0066cc] hover:bg-[#0055b3] text-white font-semibold text-xs rounded-full shadow-2xs transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95"
           >
-            <Plus className="w-3.5 h-3.5 stroke-[3]" />
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Stock</span>
           </button>
 
           <button
             type="button"
             onClick={() => setHistoryProduct(product)}
-            className="flex-1 py-2 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1 cursor-pointer"
+            className="flex-1 h-9 px-3 bg-[#f5f5f7] hover:bg-[#e5e5ea] text-[#1d1d1f] font-medium text-xs rounded-full transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95"
             title="View movement history"
           >
-            <History className="w-3.5 h-3.5 text-slate-500" />
+            <History className="w-3.5 h-3.5 text-[#86868b]" />
             <span>History</span>
           </button>
 
           <button
             type="button"
             onClick={() => setAdjustingProduct(product)}
-            className="py-2 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 font-bold text-xs rounded-xl transition-colors flex items-center justify-center cursor-pointer"
+            className="h-9 w-9 bg-[#f5f5f7] hover:bg-[#e5e5ea] text-[#86868b] hover:text-[#1d1d1f] rounded-full transition-all flex items-center justify-center cursor-pointer active:scale-95"
             title="Adjust Physical Stock Count"
           >
             <Sliders className="w-3.5 h-3.5" />
@@ -369,10 +369,10 @@ export const InventoryPage: React.FC = () => {
       {/* Top Header & Fast Action Buttons */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#1d1d1f] tracking-tight apple-tight">
             Inventory
           </h1>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
+          <p className="text-xs text-[#86868b] font-normal mt-0.5">
             Category → Optional Brand → Product organization
           </p>
         </div>
@@ -381,36 +381,36 @@ export const InventoryPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsCategoryModalOpen(true)}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 shadow-2xs cursor-pointer"
+            className="flex items-center justify-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-[#f5f5f7] text-[#1d1d1f] font-semibold text-xs rounded-full border border-[#e5e5ea] shadow-2xs cursor-pointer active:scale-95 transition-all"
           >
-            <Settings className="w-4 h-4 text-slate-500" />
+            <Settings className="w-3.5 h-3.5 text-[#86868b]" />
             <span>Categories</span>
           </button>
 
           <button
             type="button"
             onClick={() => setIsAuditModalOpen(true)}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 shadow-2xs cursor-pointer"
+            className="flex items-center justify-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-[#f5f5f7] text-[#1d1d1f] font-semibold text-xs rounded-full border border-[#e5e5ea] shadow-2xs cursor-pointer active:scale-95 transition-all"
           >
-            <ClipboardCheck className="w-4 h-4 text-blue-600" />
+            <ClipboardCheck className="w-3.5 h-3.5 text-[#0066cc]" />
             <span>Audit</span>
           </button>
 
           <button
             type="button"
             onClick={() => setIsPurchasesModalOpen(true)}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 shadow-2xs cursor-pointer"
+            className="flex items-center justify-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-[#f5f5f7] text-[#1d1d1f] font-semibold text-xs rounded-full border border-[#e5e5ea] shadow-2xs cursor-pointer active:scale-95 transition-all"
           >
-            <ShoppingBag className="w-4 h-4 text-emerald-600" />
+            <ShoppingBag className="w-3.5 h-3.5 text-emerald-600" />
             <span>Purchases</span>
           </button>
 
           <button
             type="button"
             onClick={() => setIsAddModalOpen(true)}
-            className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs shadow-blue-600/30 cursor-pointer"
+            className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-1.5 bg-[#0066cc] hover:bg-[#0055b3] text-white font-semibold text-xs rounded-full shadow-2xs cursor-pointer active:scale-95 transition-all"
           >
-            <Plus className="w-4 h-4 stroke-[3]" />
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Add Product</span>
           </button>
         </div>
@@ -418,17 +418,17 @@ export const InventoryPage: React.FC = () => {
 
       {/* Summary Cards: Products, Low Stock, Stock Value */}
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <div className="p-3 sm:p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs">
-          <div className="flex items-center gap-1.5 text-slate-400 mb-1">
-            <Package className="w-3.5 h-3.5 text-blue-600" />
-            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">
+        <div className="p-3 sm:p-4 bg-white rounded-2xl border border-[#e5e5ea] shadow-2xs">
+          <div className="flex items-center gap-1.5 text-[#86868b] mb-1">
+            <Package className="w-3.5 h-3.5 text-[#0066cc]" />
+            <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider">
               Products
             </span>
           </div>
-          <div className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">
+          <div className="text-xl sm:text-2xl font-bold text-[#1d1d1f] leading-tight apple-tight">
             {totalProductsCount}
           </div>
-          <span className="text-[10px] text-slate-400 block mt-0.5">Active items</span>
+          <span className="text-[10px] text-[#86868b] block mt-0.5">Active items</span>
         </div>
 
         <div
@@ -436,67 +436,67 @@ export const InventoryPage: React.FC = () => {
             setViewMode('flat');
             setFilterMode(lowStockCount > 0 ? 'lowStock' : 'outOfStock');
           }}
-          className="p-3 sm:p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs cursor-pointer hover:border-amber-300 transition-all"
+          className="p-3 sm:p-4 bg-white rounded-2xl border border-[#e5e5ea] shadow-2xs cursor-pointer hover:border-amber-400 transition-all"
         >
           <div className="flex items-center gap-1.5 text-amber-600 mb-1">
             <AlertTriangle className="w-3.5 h-3.5" />
-            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">
+            <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-[#86868b]">
               Low Stock
             </span>
           </div>
-          <div className="text-xl sm:text-2xl font-black text-amber-700 leading-tight">
+          <div className="text-xl sm:text-2xl font-bold text-amber-700 leading-tight apple-tight">
             {lowStockCount}
             {outOfStockCount > 0 && (
-              <span className="text-xs sm:text-sm font-bold text-rose-600 ml-1">
+              <span className="text-xs sm:text-sm font-semibold text-rose-600 ml-1">
                 ({outOfStockCount} out)
               </span>
             )}
           </div>
-          <span className="text-[10px] text-slate-400 block mt-0.5">Need restock</span>
+          <span className="text-[10px] text-[#86868b] block mt-0.5">Need restock</span>
         </div>
 
-        <div className="p-3 sm:p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs">
+        <div className="p-3 sm:p-4 bg-white rounded-2xl border border-[#e5e5ea] shadow-2xs">
           <div className="flex items-center gap-1.5 text-emerald-600 mb-1">
             <DollarSign className="w-3.5 h-3.5" />
-            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">
+            <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-[#86868b]">
               Stock Value
             </span>
           </div>
-          <div className="text-lg sm:text-2xl font-black text-emerald-700 leading-tight truncate">
+          <div className="text-lg sm:text-2xl font-bold text-emerald-700 leading-tight truncate apple-tight">
             {formatCurrency(totalStockValue)}
           </div>
-          <span className="text-[10px] text-slate-400 block mt-0.5">At cost price</span>
+          <span className="text-[10px] text-[#86868b] block mt-0.5">At cost price</span>
         </div>
       </div>
 
-      {/* View Switcher: Hierarchy (Category -> Brand -> Product) vs Flat List */}
-      <div className="flex items-center justify-between gap-2 bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200">
+      {/* View Switcher: Hierarchy (Category -> Brand -> Product) vs Flat List (Apple Segmented Control) */}
+      <div className="flex items-center justify-between gap-1 bg-[#e5e5ea]/60 p-1 rounded-full border border-[#e5e5ea]">
         <button
           type="button"
           onClick={() => {
             setViewMode('hierarchy');
             setSearchTerm('');
           }}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
             viewMode === 'hierarchy'
-              ? 'bg-white text-slate-900 shadow-2xs'
-              : 'text-slate-600 hover:text-slate-900'
+              ? 'bg-white text-[#1d1d1f] shadow-2xs apple-tight'
+              : 'text-[#86868b] hover:text-[#1d1d1f]'
           }`}
         >
-          <FolderTree className="w-4 h-4 text-blue-600" />
+          <FolderTree className="w-3.5 h-3.5 text-[#0066cc]" />
           <span>Category Hierarchy</span>
         </button>
 
         <button
           type="button"
           onClick={() => setViewMode('flat')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
             viewMode === 'flat'
-              ? 'bg-white text-slate-900 shadow-2xs'
-              : 'text-slate-600 hover:text-slate-900'
+              ? 'bg-white text-[#1d1d1f] shadow-2xs apple-tight'
+              : 'text-[#86868b] hover:text-[#1d1d1f]'
           }`}
         >
-          <Layers className="w-4 h-4 text-slate-500" />
+          <Layers className="w-3.5 h-3.5 text-[#86868b]" />
           <span>All Products List</span>
         </button>
       </div>
@@ -790,13 +790,13 @@ export const InventoryPage: React.FC = () => {
         <div className="space-y-4">
           {/* Search Input */}
           <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#86868b]" />
             <input
               type="text"
               placeholder="Search products by name, SKU, or barcode..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-3.5 py-2.5 bg-white border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs placeholder:text-slate-400"
+              className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#e5e5ea] rounded-full text-sm text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#0066cc] shadow-2xs placeholder:text-[#86868b]"
             />
           </div>
 
@@ -805,10 +805,10 @@ export const InventoryPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setFilterMode('all')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors cursor-pointer active:scale-95 ${
                 filterMode === 'all'
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                  ? 'bg-[#1d1d1f] text-white'
+                  : 'bg-white text-[#1d1d1f] border border-[#e5e5ea] hover:bg-[#f5f5f7]'
               }`}
             >
               All ({activeProducts.length})
@@ -817,16 +817,16 @@ export const InventoryPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setFilterMode('lowStock')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 ${
                 filterMode === 'lowStock'
                   ? 'bg-amber-600 text-white'
-                  : 'bg-white text-amber-700 border border-amber-200 hover:bg-amber-50'
+                  : 'bg-white text-amber-800 border border-amber-200 hover:bg-amber-50'
               }`}
             >
               <span>Low Stock</span>
               {lowStockCount > 0 && (
                 <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
                     filterMode === 'lowStock'
                       ? 'bg-amber-800 text-white'
                       : 'bg-amber-100 text-amber-800'
@@ -840,16 +840,16 @@ export const InventoryPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setFilterMode('outOfStock')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 ${
                 filterMode === 'outOfStock'
                   ? 'bg-rose-600 text-white'
-                  : 'bg-white text-rose-700 border border-rose-200 hover:bg-rose-50'
+                  : 'bg-white text-rose-800 border border-rose-200 hover:bg-rose-50'
               }`}
             >
               <span>Out of Stock</span>
               {outOfStockCount > 0 && (
                 <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
                     filterMode === 'outOfStock' ? 'bg-rose-800 text-white' : 'bg-rose-100 text-rose-800'
                   }`}
                 >
@@ -862,10 +862,10 @@ export const InventoryPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setFilterMode('archived')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors cursor-pointer active:scale-95 ${
                   filterMode === 'archived'
-                    ? 'bg-slate-700 text-white'
-                    : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-100'
+                    ? 'bg-[#1d1d1f] text-white'
+                    : 'bg-white text-[#86868b] border border-[#e5e5ea] hover:bg-[#f5f5f7]'
                 }`}
               >
                 Archived ({archivedProducts.length})
@@ -874,13 +874,13 @@ export const InventoryPage: React.FC = () => {
           </div>
 
           {/* Sort By & Reorder Toolbar */}
-          <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-white border border-slate-200/90 rounded-2xl shadow-2xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-white border border-[#e5e5ea] rounded-2xl shadow-2xs">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-500">Sort By:</span>
+              <span className="text-xs font-medium text-[#86868b]">Sort By:</span>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="h-8 px-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                className="h-8 px-3 bg-[#f5f5f7] border border-[#e5e5ea] rounded-full text-xs font-medium text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#0066cc] cursor-pointer"
               >
                 <option value="custom">Custom Order (Default)</option>
                 <option value="name-asc">Name: A → Z</option>
@@ -900,9 +900,9 @@ export const InventoryPage: React.FC = () => {
                 setReorderProductsList(activeProducts);
                 setReorderModalTitle('Reorder All Products');
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#f5f5f7] hover:bg-[#e5e5ea] text-[#1d1d1f] text-xs font-medium rounded-full transition-colors cursor-pointer active:scale-95"
             >
-              <ArrowUpDown className="w-3.5 h-3.5 text-slate-500" />
+              <ArrowUpDown className="w-3.5 h-3.5 text-[#86868b]" />
               <span>Reorder Products</span>
             </button>
           </div>

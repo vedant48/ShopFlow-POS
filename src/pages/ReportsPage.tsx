@@ -161,10 +161,10 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onNavigateToTab }) => 
       {/* Top Header & End-Of-Day Summary Button (Requirement 14) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#1d1d1f] tracking-tight apple-tight">
             Daily Report & Analytics
           </h1>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
+          <p className="text-xs text-[#86868b] font-normal mt-0.5">
             {formattedDateTitle} · Profit, cash flow, and product performance
           </p>
         </div>
@@ -172,9 +172,9 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onNavigateToTab }) => 
         <button
           type="button"
           onClick={() => setIsEndOfDayModalOpen(true)}
-          className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs shadow-blue-600/30 cursor-pointer shrink-0"
+          className="flex items-center justify-center gap-1.5 px-4 py-2 bg-[#0066cc] hover:bg-[#0055b3] text-white font-semibold text-xs rounded-full shadow-2xs cursor-pointer shrink-0 active:scale-95 transition-all"
         >
-          <FileText className="w-4 h-4" />
+          <FileText className="w-3.5 h-3.5" />
           <span>END OF DAY SUMMARY</span>
         </button>
       </div>
@@ -194,10 +194,10 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onNavigateToTab }) => 
             key={tab.id}
             type="button"
             onClick={() => setFilterOption(tab.id)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer active:scale-95 ${
               filterOption === tab.id
-                ? 'bg-slate-900 text-white shadow-2xs'
-                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                ? 'bg-[#1d1d1f] text-white shadow-2xs'
+                : 'bg-white text-[#1d1d1f] border border-[#e5e5ea] hover:bg-[#f5f5f7]'
             }`}
           >
             {tab.label}
@@ -205,79 +205,79 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onNavigateToTab }) => 
         ))}
 
         {filterOption === 'custom' && (
-          <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-2 py-1 shrink-0">
-            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+          <div className="flex items-center gap-1.5 bg-white border border-[#e5e5ea] rounded-full px-3 py-1 shrink-0">
+            <Calendar className="w-3.5 h-3.5 text-[#86868b]" />
             <input
               type="date"
               value={customDate}
               onChange={(e) => setCustomDate(e.target.value)}
-              className="text-xs font-bold text-slate-800 bg-transparent focus:outline-none"
+              className="text-xs font-semibold text-[#1d1d1f] bg-transparent focus:outline-none"
             />
           </div>
         )}
       </div>
 
       {isLoading ? (
-        <div className="p-8 text-center text-slate-400 text-xs">Loading report...</div>
+        <div className="p-8 text-center text-[#86868b] text-xs font-normal">Loading report...</div>
       ) : (
         <>
           {/* Key Metrics Grid (Requirement 11 & 13) */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
             {/* Total Revenue */}
-            <div className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs">
-              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">
+            <div className="p-4 bg-white rounded-2xl border border-[#e5e5ea] shadow-2xs">
+              <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-[#86868b] block mb-1">
                 Total Revenue
               </span>
-              <div className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">
+              <div className="text-2xl sm:text-3xl font-bold text-[#1d1d1f] leading-tight apple-tight">
                 {formatCurrency(currentStats.totalRevenue)}
               </div>
-              <span className="text-[11px] text-slate-500 mt-1 block">
+              <span className="text-[11px] text-[#86868b] mt-1 block font-normal">
                 Avg sale: {formatCurrency(currentStats.averageSale)}
               </span>
             </div>
 
             {/* Estimated Profit */}
-            <div className="p-4 bg-gradient-to-br from-emerald-50/70 to-white rounded-2xl border border-emerald-200/90 shadow-2xs">
+            <div className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-200/80 shadow-2xs">
               <div className="flex items-center justify-between text-emerald-800 mb-1">
-                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">
+                <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider">
                   Estimated Profit
                 </span>
                 <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-emerald-700 leading-tight">
+              <div className="text-2xl sm:text-3xl font-bold text-emerald-700 leading-tight apple-tight">
                 {formatCurrency(currentStats.estimatedProfit)}
               </div>
-              <span className="text-[11px] text-emerald-800/80 mt-1 block font-semibold">
+              <span className="text-[11px] text-emerald-800/80 mt-1 block font-normal">
                 Selling price − Item cost price
               </span>
             </div>
 
             {/* Transactions */}
-            <div className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs">
-              <div className="flex items-center justify-between text-slate-400 mb-1">
-                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">
+            <div className="p-4 bg-white rounded-2xl border border-[#e5e5ea] shadow-2xs">
+              <div className="flex items-center justify-between text-[#86868b] mb-1">
+                <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider">
                   Transactions
                 </span>
-                <ShoppingBag className="w-3.5 h-3.5 text-blue-600" />
+                <ShoppingBag className="w-3.5 h-3.5 text-[#0066cc]" />
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">
+              <div className="text-2xl sm:text-3xl font-bold text-[#1d1d1f] leading-tight apple-tight">
                 {currentStats.transactionCount}
               </div>
-              <span className="text-[11px] text-slate-500 mt-1 block">Bills completed</span>
+              <span className="text-[11px] text-[#86868b] mt-1 block font-normal">Bills completed</span>
             </div>
 
             {/* Items Sold */}
-            <div className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs">
-              <div className="flex items-center justify-between text-slate-400 mb-1">
-                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">
+            <div className="p-4 bg-white rounded-2xl border border-[#e5e5ea] shadow-2xs">
+              <div className="flex items-center justify-between text-[#86868b] mb-1">
+                <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider">
                   Items Sold
                 </span>
                 <Layers className="w-3.5 h-3.5 text-amber-600" />
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">
+              <div className="text-2xl sm:text-3xl font-bold text-[#1d1d1f] leading-tight apple-tight">
                 {currentStats.itemsSold}
               </div>
-              <span className="text-[11px] text-slate-500 mt-1 block">Units handed to customers</span>
+              <span className="text-[11px] text-[#86868b] mt-1 block font-normal">Units handed to customers</span>
             </div>
           </div>
 

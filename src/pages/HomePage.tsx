@@ -368,10 +368,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
       {/* 1. Header Greeting & Brand */}
       <div className="flex items-center justify-between">
         <div>
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+          <span className="text-xs font-semibold text-[#86868b] uppercase tracking-wider block">
             {greeting}
           </span>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#1d1d1f] tracking-tight apple-tight">
             ShopFlow
           </h1>
         </div>
@@ -379,34 +379,34 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
         <button
           type="button"
           onClick={() => setIsExpenseModalOpen(true)}
-          className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+          className="px-3.5 py-1.5 bg-white hover:bg-[#f5f5f7] text-[#1d1d1f] border border-[#e5e5ea] font-semibold text-xs rounded-full flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs active:scale-95"
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-3.5 h-3.5 stroke-[2.2]" />
           <span>Expense</span>
         </button>
       </div>
 
       {/* 1 & 2. Today's Summary & Money Breakdown */}
-      <div className="bg-white rounded-3xl border border-slate-200/90 p-4 sm:p-5 shadow-xs space-y-3">
+      <div className="bg-white rounded-2xl border border-[#e5e5ea] p-4 sm:p-5 shadow-2xs space-y-3">
         {/* Primary Metric: Today's Sales */}
         <div className="flex items-start justify-between">
           <div>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+            <span className="text-xs font-semibold text-[#86868b] uppercase tracking-wider block">
               Today's Sales
             </span>
-            <div className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight mt-0.5">
+            <div className="text-2xl sm:text-4xl font-bold text-[#1d1d1f] tracking-tight mt-0.5 apple-tight">
               {formatCurrency(stats.todayRevenue)}
             </div>
-            <div className="text-xs text-slate-500 font-semibold mt-0.5">
+            <div className="text-xs text-[#86868b] font-normal mt-0.5">
               {stats.todayItemsSold} items sold · {stats.transactionCount} sales
             </div>
           </div>
 
           <div className="text-right flex flex-col items-end gap-1">
-            <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">
+            <span className="text-[10px] font-semibold text-emerald-700 uppercase tracking-wider block">
               Est. Profit
             </span>
-            <span className="text-base sm:text-xl font-black text-emerald-600 block">
+            <span className="text-base sm:text-xl font-bold text-emerald-600 block apple-tight">
               {formatCurrency(stats.todayEstimatedProfit)}
             </span>
 
@@ -414,7 +414,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
             <button
               type="button"
               onClick={() => setIsStatsExpanded(!isStatsExpanded)}
-              className="sm:hidden text-[11px] font-bold text-blue-600 flex items-center gap-0.5 mt-1 cursor-pointer"
+              className="sm:hidden text-[11px] font-semibold text-[#0066cc] flex items-center gap-0.5 mt-1 cursor-pointer"
             >
               <span>{isStatsExpanded ? 'Less' : 'Details'}</span>
               {isStatsExpanded ? (
@@ -428,33 +428,33 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
 
         {/* Money Received Split & Expenses: Always visible on >= sm, toggleable on mobile */}
         <div className={`${isStatsExpanded ? 'block' : 'hidden sm:block'} space-y-3 pt-1 animate-in fade-in duration-150`}>
-          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100 text-center">
-            <div className="p-2 sm:p-2.5 bg-slate-50 rounded-2xl border border-slate-100">
-              <div className="flex items-center justify-center gap-1 text-[11px] font-bold text-emerald-700 mb-0.5">
+          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#f5f5f7] text-center">
+            <div className="p-2 sm:p-2.5 bg-[#f5f5f7]/60 rounded-xl border border-[#e5e5ea]/60">
+              <div className="flex items-center justify-center gap-1 text-[11px] font-semibold text-emerald-700 mb-0.5">
                 <Banknote className="w-3.5 h-3.5" />
                 <span>Cash</span>
               </div>
-              <div className="text-xs sm:text-base font-black text-slate-900">
+              <div className="text-xs sm:text-base font-bold text-[#1d1d1f] apple-tight">
                 {formatCurrency(stats.todayCash)}
               </div>
             </div>
 
-            <div className="p-2 sm:p-2.5 bg-slate-50 rounded-2xl border border-slate-100">
-              <div className="flex items-center justify-center gap-1 text-[11px] font-bold text-blue-700 mb-0.5">
+            <div className="p-2 sm:p-2.5 bg-[#f5f5f7]/60 rounded-xl border border-[#e5e5ea]/60">
+              <div className="flex items-center justify-center gap-1 text-[11px] font-semibold text-[#0066cc] mb-0.5">
                 <QrCode className="w-3.5 h-3.5" />
                 <span>UPI</span>
               </div>
-              <div className="text-xs sm:text-base font-black text-slate-900">
+              <div className="text-xs sm:text-base font-bold text-[#1d1d1f] apple-tight">
                 {formatCurrency(stats.todayUPI)}
               </div>
             </div>
 
-            <div className="p-2 sm:p-2.5 bg-slate-50 rounded-2xl border border-slate-100">
-              <div className="flex items-center justify-center gap-1 text-[11px] font-bold text-violet-700 mb-0.5">
+            <div className="p-2 sm:p-2.5 bg-[#f5f5f7]/60 rounded-xl border border-[#e5e5ea]/60">
+              <div className="flex items-center justify-center gap-1 text-[11px] font-semibold text-[#5856d6] mb-0.5">
                 <BookOpen className="w-3.5 h-3.5" />
                 <span>Udhaar</span>
               </div>
-              <div className="text-xs sm:text-base font-black text-slate-900">
+              <div className="text-xs sm:text-base font-bold text-[#1d1d1f] apple-tight">
                 {formatCurrency(stats.todayUdhaar)}
               </div>
             </div>
@@ -462,14 +462,14 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
 
           {/* Expenses & Estimated Net Bar */}
           {stats.todayExpenses > 0 && (
-            <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-1.5 text-slate-600">
+            <div className="p-2.5 bg-[#f5f5f7]/60 rounded-xl border border-[#e5e5ea]/60 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-1.5 text-[#86868b]">
                 <Receipt className="w-3.5 h-3.5 text-rose-500" />
-                <span>Expenses: <strong className="text-slate-900">{formatCurrency(stats.todayExpenses)}</strong></span>
+                <span>Expenses: <strong className="text-[#1d1d1f] font-semibold">{formatCurrency(stats.todayExpenses)}</strong></span>
               </div>
               <div className="text-right">
-                <span className="text-[11px] text-slate-500 mr-1.5">Estimated Net:</span>
-                <strong className="text-emerald-700 font-black">
+                <span className="text-[11px] text-[#86868b] mr-1.5">Estimated Net:</span>
+                <strong className="text-emerald-700 font-bold apple-tight">
                   {formatCurrency(stats.todayNetAfterExpenses)}
                 </strong>
               </div>
@@ -480,29 +480,29 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
 
       {/* 9. Out of Stock Alert Banner (Requirement 9) */}
       {stats.outOfStockProducts.length > 0 && (
-        <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl space-y-2 shadow-2xs">
+        <div className="p-3.5 bg-rose-50/70 border border-rose-200 rounded-2xl space-y-2 shadow-2xs">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <AlertOctagon className="w-4 h-4 text-rose-600 shrink-0" />
-              <h3 className="text-xs sm:text-sm font-black text-rose-950 uppercase tracking-tight">
+              <h3 className="text-xs sm:text-sm font-semibold text-rose-950 uppercase tracking-tight apple-tight">
                 Out of Stock ({stats.outOfStockProducts.length})
               </h3>
             </div>
-            <span className="text-[11px] font-bold text-rose-700">Restock needed</span>
+            <span className="text-[11px] font-medium text-rose-700">Restock needed</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 w-full">
             {stats.outOfStockProducts.map((p) => (
               <div
                 key={p.id}
-                className="px-3 py-1.5 bg-white border border-rose-200 rounded-xl text-xs font-bold text-slate-800 flex items-center gap-2 shadow-2xs"
+                className="px-3 py-1.5 bg-white border border-rose-200/80 rounded-full text-xs font-medium text-[#1d1d1f] flex items-center gap-2 shadow-2xs"
               >
                 <span>{p.emoji || '📦'}</span>
                 <span>{p.name}</span>
                 <button
                   type="button"
                   onClick={() => setRestockingProduct(p)}
-                  className="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-black cursor-pointer ml-1"
+                  className="px-2.5 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded-full text-[10px] font-semibold cursor-pointer ml-1 active:scale-95 transition-all"
                 >
                   RESTOCK
                 </button>
@@ -518,17 +518,17 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
         <div className="lg:col-span-7 xl:col-span-8 space-y-4">
           {/* Section 12: Recovery flow for new device with no local data */}
           {products.length === 0 && !productsLoading && (
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/90 rounded-2xl p-4 shadow-xs">
+            <div className="bg-white border border-[#e5e5ea] rounded-2xl p-4 shadow-2xs">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-blue-500/20">
+                  <div className="w-10 h-10 rounded-full bg-[#0066cc]/10 text-[#0066cc] flex items-center justify-center shrink-0">
                     <Cloud className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900">
+                    <h4 className="text-sm font-semibold text-[#1d1d1f] apple-tight">
                       No data found on this device.
                     </h4>
-                    <p className="text-xs text-slate-600 mt-0.5">
+                    <p className="text-xs text-[#86868b] mt-0.5 font-normal">
                       Logged in on a new device? Restore your shop records from cloud backup in seconds.
                     </p>
                   </div>
@@ -536,7 +536,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
                 <button
                   type="button"
                   onClick={() => onNavigateToTab?.('settings')}
-                  className="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors shrink-0 cursor-pointer flex items-center justify-center gap-1.5 tap-press"
+                  className="w-full sm:w-auto px-4 py-2 bg-[#0066cc] hover:bg-[#0055b3] text-white text-xs font-semibold rounded-full shadow-2xs transition-colors shrink-0 cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
                 >
                   <Upload className="w-3.5 h-3.5" />
                   <span>RESTORE FROM CLOUD</span>
@@ -548,14 +548,14 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
           <div className="space-y-3">
             {/* Visual Banner when Editing Open Order */}
             {activeEditingOrder && (
-              <div className="p-3.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-2xl shadow-sm flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2">
+              <div className="p-3.5 bg-amber-500 text-white rounded-2xl shadow-sm flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2">
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse shrink-0" />
+                  <span className="w-2 h-2 rounded-full bg-white animate-pulse shrink-0" />
                   <div className="min-w-0">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-100 block">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-100 block">
                       Active Timeline Mode
                     </span>
-                    <span className="text-sm font-black truncate block">
+                    <span className="text-sm font-semibold truncate block apple-tight">
                       Adding to: {activeEditingOrder.temporaryCustomerName || 'Customer'}
                     </span>
                   </div>
@@ -564,7 +564,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
                 <button
                   type="button"
                   onClick={handleSaveAndReturnToOrder}
-                  className="px-3.5 py-1.5 bg-white hover:bg-amber-50 text-amber-950 font-black text-xs rounded-xl shadow-xs transition-colors cursor-pointer shrink-0"
+                  className="px-3.5 py-1.5 bg-white hover:bg-amber-50 text-amber-950 font-semibold text-xs rounded-full shadow-2xs transition-colors cursor-pointer shrink-0 active:scale-95"
                 >
                   Save & Return
                 </button>
@@ -573,7 +573,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 sm:gap-3">
-                <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                <h2 className="text-base sm:text-lg font-bold text-[#1d1d1f] tracking-tight apple-tight">
                   Quick Sale
                 </h2>
 
@@ -581,12 +581,12 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
                 <button
                   type="button"
                   onClick={() => setIsOpenOrdersModalOpen(true)}
-                  className="px-2.5 sm:px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 font-black text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95"
+                  className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200/90 text-amber-900 font-semibold text-xs rounded-full flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95"
                 >
                   <Clock className="w-3.5 h-3.5 text-amber-600" />
                   <span>OPEN ORDERS</span>
                   {openOrdersCount > 0 && (
-                    <span className="w-5 h-5 rounded-full bg-amber-500 text-white text-[11px] font-black flex items-center justify-center">
+                    <span className="w-5 h-5 rounded-full bg-amber-500 text-white text-[11px] font-bold flex items-center justify-center">
                       {openOrdersCount}
                     </span>
                   )}
@@ -595,7 +595,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
             </div>
 
             {productsLoading ? (
-              <div className="p-8 text-center text-slate-400 font-medium">
+              <div className="p-8 text-center text-[#86868b] font-normal">
                 Loading products...
               </div>
             ) : (
@@ -607,14 +607,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
             )}
           </div>
 
-
           {/* 8. Low Stock Section (Requirement 8) */}
           {stats.lowStockProducts.length > 0 && (
-            <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-2xs space-y-3">
+            <div className="bg-white rounded-2xl border border-[#e5e5ea] p-4 shadow-2xs space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 text-amber-600" />
-                  <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">
+                  <h3 className="text-sm font-semibold text-[#1d1d1f] uppercase tracking-wider apple-tight">
                     Low Stock
                   </h3>
                 </div>
@@ -622,7 +621,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
                 <button
                   type="button"
                   onClick={() => onNavigateToTab?.('inventory')}
-                  className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-0.5 cursor-pointer"
+                  className="text-xs font-semibold text-[#0066cc] hover:text-[#0055b3] flex items-center gap-0.5 cursor-pointer"
                 >
                   <span>MANAGE STOCK</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
@@ -633,13 +632,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
                 {stats.lowStockProducts.map((p) => (
                   <div
                     key={p.id}
-                    className="p-2.5 bg-amber-50/50 border border-amber-200/80 rounded-xl text-xs flex items-center justify-between"
+                    className="p-2.5 bg-[#f5f5f7]/70 border border-[#e5e5ea] rounded-xl text-xs flex items-center justify-between"
                   >
                     <div className="flex items-center gap-1.5 truncate pr-1">
                       <span>{p.emoji || '📦'}</span>
-                      <span className="font-bold text-slate-800 truncate">{p.name}</span>
+                      <span className="font-medium text-[#1d1d1f] truncate">{p.name}</span>
                     </div>
-                    <span className="font-black text-amber-800 shrink-0">
+                    <span className="font-semibold text-amber-800 shrink-0 apple-tight">
                       {p.stock} left
                     </span>
                   </div>

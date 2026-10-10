@@ -35,7 +35,7 @@ export const Modal: React.FC<ModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/40 backdrop-blur-xs transition-opacity animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/25 backdrop-blur-xs transition-opacity animate-in fade-in duration-150">
       {/* Backdrop */}
       <div className="fixed inset-0" onClick={onClose} aria-hidden="true" />
 
@@ -43,28 +43,28 @@ export const Modal: React.FC<ModalProps> = ({
       <div
         role="dialog"
         aria-modal="true"
-        className={`relative z-10 w-full ${maxWidth} bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-200/80 max-h-[92vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-6 duration-200`}
+        className={`relative z-10 w-full ${maxWidth} bg-white rounded-t-[28px] sm:rounded-[22px] shadow-2xl border border-[#e5e5ea] max-h-[92vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-200`}
       >
         {/* Mobile Pull Handle Indicator */}
-        <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mt-3 mb-1 sm:hidden" />
+        <div className="w-10 h-1 bg-[#d2d2d7] rounded-full mx-auto mt-3 mb-1 sm:hidden" />
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#f0f0f2]">
           <div>
-            <h2 className="text-lg font-bold text-slate-900 leading-tight">
+            <h2 className="text-base sm:text-lg font-semibold text-[#1d1d1f] tracking-tight apple-tight leading-tight">
               {title}
             </h2>
             {subtitle && (
-              <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
+              <p className="text-xs text-[#86868b] mt-0.5">{subtitle}</p>
             )}
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 active:scale-95 flex items-center justify-center text-slate-600 transition-colors"
+            className="w-8 h-8 rounded-full bg-[#f5f5f7] hover:bg-[#e5e5ea] active:scale-95 flex items-center justify-center text-[#1d1d1f] transition-all cursor-pointer apple-focus"
             aria-label="Close modal"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 

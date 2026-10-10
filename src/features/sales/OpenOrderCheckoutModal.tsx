@@ -347,7 +347,7 @@ export const OpenOrderCheckoutModal: React.FC<OpenOrderCheckoutModalProps> = ({
                   className="w-full h-10 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs rounded-xl flex items-center justify-center gap-1 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>+ Create New Customer</span>
+                  <span>Create New Customer</span>
                 </button>
               </div>
             )}

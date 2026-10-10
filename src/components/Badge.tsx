@@ -15,17 +15,17 @@ export const Badge: React.FC<BadgeProps> = ({
   size = 'md',
 }) => {
   const variantStyles = {
-    paid: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    udhaar: 'bg-violet-50 text-violet-700 border-violet-200',
-    'low-stock': 'bg-rose-50 text-rose-700 border-rose-200 font-semibold animate-pulse',
-    'in-stock': 'bg-slate-100 text-slate-700 border-slate-200',
-    neutral: 'bg-slate-100 text-slate-700 border-slate-200',
-    blue: 'bg-blue-50 text-blue-700 border-blue-200',
+    paid: 'bg-[#e8f5e9] text-[#1b5e20] border-[#c8e6c9]',
+    udhaar: 'bg-[#f3e8ff] text-[#6b21a8] border-[#e9d5ff]',
+    'low-stock': 'bg-[#fff1f0] text-[#cf1322] border-[#ffa39e] font-semibold',
+    'in-stock': 'bg-[#f5f5f7] text-[#1d1d1f] border-[#e5e5ea]',
+    neutral: 'bg-[#f5f5f7] text-[#6e6e73] border-[#e5e5ea]',
+    blue: 'bg-[#e8f2ff] text-[#0066cc] border-[#b6d7ff]',
   };
 
   const sizeStyles = {
-    sm: 'text-[11px] px-2 py-0.5 rounded-md font-medium border',
-    md: 'text-xs px-2.5 py-1 rounded-full font-semibold border',
+    sm: 'text-[10px] px-2 py-0.5 rounded-full font-medium border',
+    md: 'text-[11px] px-2.5 py-0.5 rounded-full font-medium border',
   };
 
   return (

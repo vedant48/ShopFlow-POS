@@ -28,7 +28,7 @@ export const Layout: React.FC<LayoutProps> = ({
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900 w-full max-w-full overflow-x-hidden">
+    <div className="min-h-screen bg-[#f5f5f7] flex flex-col text-[#1d1d1f] w-full max-w-full overflow-x-hidden">
       {/* PWA Service Worker Update Prompt */}
       <PwaUpdateToast />
 
@@ -44,9 +44,9 @@ export const Layout: React.FC<LayoutProps> = ({
       {/* PWA Android Install Banner */}
       <InstallPromptBanner />
 
-      {/* Desktop Navigation Tabs (Visible on screens >= md) */}
-      <div className="hidden md:block bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-6 flex items-center gap-1">
+      {/* Desktop Navigation Tabs (Apple Sub-Nav frosted style) */}
+      <div className="hidden md:block bg-white/95 backdrop-blur-md border-b border-[#e5e5ea] sticky top-[57px] z-20">
+        <div className="max-w-7xl mx-auto px-6 flex items-center gap-1.5 h-12">
           {desktopTabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -55,16 +55,16 @@ export const Layout: React.FC<LayoutProps> = ({
                 key={tab.id}
                 type="button"
                 onClick={() => onTabChange(tab.id)}
-                className={`flex items-center gap-2 py-3 px-4 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
+                className={`flex items-center gap-2 h-full px-4 text-xs font-semibold border-b-2 transition-all cursor-pointer apple-focus ${
                   isActive
-                    ? 'border-blue-600 text-blue-600 bg-blue-50/50'
-                    : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                    ? 'border-[#0066cc] text-[#0066cc] bg-[#0066cc]/5'
+                    : 'border-transparent text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-[#f5f5f7]'
                 }`}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className={`w-4 h-4 ${isActive ? 'stroke-[2.2]' : 'stroke-[1.75]'}`} />
                 <span>{tab.label}</span>
                 {tab.id === 'home' && cartCount > 0 && (
-                  <span className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                  <span className="bg-[#0066cc] text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
                     {cartCount}
                   </span>
                 )}

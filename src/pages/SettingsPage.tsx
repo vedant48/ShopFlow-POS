@@ -454,37 +454,37 @@ export const SettingsPage: React.FC = () => {
   return (
     <div className="space-y-5 max-w-3xl mx-auto pb-16">
       {/* Top Header */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-blue-500 flex items-center justify-center text-white text-2xl shadow-sm shadow-blue-500/20">
+      <div className="bg-white rounded-2xl border border-[#e5e5ea] p-5 shadow-2xs">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-full bg-[#0066cc]/10 text-[#0066cc] flex items-center justify-center text-xl shrink-0">
             ⚡
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-900 tracking-tight leading-none">Settings</h2>
-            <p className="text-xs text-slate-500 mt-1">ShopFlow PWA &bull; Offline Android Configuration</p>
+            <h2 className="text-lg font-bold text-[#1d1d1f] tracking-tight leading-none apple-tight">Settings</h2>
+            <p className="text-xs text-[#86868b] mt-1 font-normal">ShopFlow &bull; Offline Android & Sync Configuration</p>
           </div>
         </div>
       </div>
 
       {installSuccessNotice && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-xl text-sm flex items-center gap-2">
+        <div className="bg-emerald-50/70 border border-emerald-200 text-emerald-800 p-4 rounded-2xl text-sm flex items-center gap-2">
           <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
           <span>{installSuccessNotice}</span>
         </div>
       )}
 
       {/* Profile & Shop Settings Section */}
-      <section className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+      <section className="bg-white rounded-2xl border border-[#e5e5ea] p-5 shadow-2xs space-y-4">
+        <div className="flex items-center justify-between border-b border-[#e5e5ea] pb-3">
           <div className="flex items-center gap-2">
-            <Store className="w-5 h-5 text-blue-600" />
-            <h3 className="font-bold text-slate-900 text-base">Shop Profile</h3>
+            <Store className="w-5 h-5 text-[#0066cc]" />
+            <h3 className="font-bold text-[#1d1d1f] text-base apple-tight">Shop Profile</h3>
           </div>
           {!isEditingProfile ? (
             <button
               type="button"
               onClick={() => setIsEditingProfile(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#f5f5f7] hover:bg-[#e5e5ea] text-[#1d1d1f] text-xs font-semibold rounded-full transition-colors cursor-pointer active:scale-95"
             >
               <Edit3 className="w-3.5 h-3.5" />
               <span>Edit Shop</span>
@@ -493,7 +493,7 @@ export const SettingsPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsEditingProfile(false)}
-              className="text-xs text-slate-500 hover:text-slate-700 cursor-pointer"
+              className="text-xs text-[#86868b] hover:text-[#1d1d1f] cursor-pointer"
             >
               Cancel
             </button>
@@ -504,36 +504,36 @@ export const SettingsPage: React.FC = () => {
           <div className="space-y-3">
             <div className="flex items-start justify-between">
               <div>
-                <h4 className="text-base font-extrabold text-slate-900 tracking-tight">
+                <h4 className="text-base font-bold text-[#1d1d1f] tracking-tight apple-tight">
                   {shop?.name || 'Sharma General Store'}
                 </h4>
-                <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
-                  <User className="w-3.5 h-3.5 text-slate-400" />
+                <div className="flex items-center gap-2 text-xs text-[#86868b] mt-0.5">
+                  <User className="w-3.5 h-3.5 text-[#86868b]" />
                   <span>
-                    Owner: <strong className="text-slate-700">{user?.name || 'Raj Kumar'}</strong>
+                    Owner: <strong className="text-[#1d1d1f] font-semibold">{user?.name || 'Raj Kumar'}</strong>
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
-                  <Phone className="w-3.5 h-3.5 text-slate-400" />
+                <div className="flex items-center gap-2 text-xs text-[#86868b] mt-0.5">
+                  <Phone className="w-3.5 h-3.5 text-[#86868b]" />
                   <span>
-                    Phone: <strong className="text-slate-700">{user?.phone || '98XXXXXXXX'}</strong>
+                    Phone: <strong className="text-[#1d1d1f] font-semibold">{user?.phone || '98XXXXXXXX'}</strong>
                   </span>
                 </div>
               </div>
 
               <div className="flex flex-col items-end gap-2">
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-[11px] font-bold">
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#0066cc]/10 text-[#0066cc] text-[11px] font-semibold border border-[#0066cc]/20">
                   Active Shop
                 </span>
               </div>
             </div>
 
-            <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between">
-              <span className="text-xs text-slate-400">Shop ID: {shop?.id || 'demo'}</span>
+            <div className="pt-2 border-t border-[#f5f5f7] flex items-center justify-between">
+              <span className="text-xs text-[#86868b]">Shop ID: {shop?.id || 'demo'}</span>
               <button
                 type="button"
                 onClick={() => setShowLogoutConfirm(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-rose-600 text-xs font-semibold rounded-full transition-colors cursor-pointer active:scale-95"
               >
                 <LogOut className="w-3.5 h-3.5" />
                 <span>Logout</span>
@@ -679,16 +679,16 @@ export const SettingsPage: React.FC = () => {
                   key={sess.id}
                   className={`p-3.5 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                     isCurrent
-                      ? 'bg-blue-50/40 border-blue-200/80 shadow-2xs'
-                      : 'bg-slate-50/70 border-slate-200/80 hover:bg-slate-50'
+                      ? 'bg-blue-50/30 border-[#0066cc]/30 shadow-2xs'
+                      : 'bg-[#f5f5f7]/60 border-[#e5e5ea] hover:bg-[#f5f5f7]'
                   }`}
                 >
                   <div className="flex items-start gap-3">
                     <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                      className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
                         isCurrent
-                          ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
-                          : 'bg-white border border-slate-200 text-slate-600'
+                          ? 'bg-[#0066cc] text-white shadow-2xs'
+                          : 'bg-white border border-[#e5e5ea] text-[#1d1d1f]'
                       }`}
                     >
                       {isMobile ? <Smartphone className="w-5 h-5" /> : <Laptop className="w-5 h-5" />}
@@ -696,27 +696,27 @@ export const SettingsPage: React.FC = () => {
 
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="text-sm font-extrabold text-slate-900 truncate">
+                        <h4 className="text-sm font-semibold text-[#1d1d1f] truncate apple-tight">
                           {displayName}
                         </h4>
                         {isCurrent ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-semibold uppercase tracking-wider">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
                             Current Device
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 text-[10px] font-bold">
+                          <span className="px-2 py-0.5 rounded-full bg-[#e5e5ea] text-[#1d1d1f] text-[10px] font-medium">
                             Active Session
                           </span>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-1 flex-wrap">
+                      <div className="flex items-center gap-2 text-[11px] text-[#86868b] mt-1 flex-wrap">
                         <span>Signed in: {formattedDate}</span>
                         {sess.deviceId && (
                           <>
-                            <span className="text-slate-300">•</span>
-                            <span className="font-mono text-[10px] text-slate-400 max-w-[150px]">
+                            <span className="text-[#86868b]">•</span>
+                            <span className="font-mono text-[10px] text-[#86868b] max-w-[150px]">
                               ID: {sess.deviceId}
                             </span>
                           </>
@@ -725,12 +725,12 @@ export const SettingsPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-end gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/50">
+                  <div className="flex items-center justify-end gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#e5e5ea]">
                     {isCurrent ? (
                       <button
                         type="button"
                         onClick={() => setShowLogoutConfirm(true)}
-                        className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 bg-red-50 hover:bg-red-100 text-rose-600 text-xs font-semibold rounded-full transition-colors cursor-pointer active:scale-95"
                       >
                         <LogOut className="w-3.5 h-3.5" />
                         <span>Log Out</span>
@@ -739,7 +739,7 @@ export const SettingsPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setSessionToTerminate(sess)}
-                        className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-300 text-rose-600 text-xs font-bold rounded-xl transition-all shadow-2xs cursor-pointer tap-press"
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-rose-50 border border-[#e5e5ea] hover:border-rose-200 text-rose-600 text-xs font-semibold rounded-full transition-all shadow-2xs cursor-pointer active:scale-95"
                       >
                         <LogOut className="w-3.5 h-3.5" />
                         <span>Terminate Session</span>

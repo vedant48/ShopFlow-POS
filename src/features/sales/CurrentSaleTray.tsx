@@ -35,28 +35,28 @@ export const CurrentSaleTray: React.FC<CurrentSaleTrayProps> = ({
   // Empty Cart State
   if (cart.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 text-center shadow-2xs">
-        <div className="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-2">
+      <div className="bg-white rounded-2xl border border-[#e5e5ea] p-5 text-center shadow-2xs">
+        <div className="w-12 h-12 rounded-full bg-[#0066cc]/10 text-[#0066cc] flex items-center justify-center mx-auto mb-2.5">
           <ShoppingBag className="w-5 h-5 stroke-[2.2]" />
         </div>
-        <h3 className="text-sm sm:text-base font-extrabold text-slate-900 leading-snug">
-          Start a sale
+        <h3 className="text-sm sm:text-base font-semibold text-[#1d1d1f] leading-snug apple-tight">
+          Current Sale Empty
         </h3>
-        <p className="text-xs text-slate-500 font-medium mt-0.5">
-          Tap a product above to add it
+        <p className="text-xs text-[#86868b] font-normal mt-0.5">
+          Tap items above to add to cart
         </p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm flex flex-col overflow-hidden">
+    <div className="bg-white rounded-2xl border border-[#e5e5ea] shadow-2xs flex flex-col overflow-hidden">
       {/* Header */}
       {activeEditingOrderName ? (
         <div className="px-4 py-2.5 bg-amber-500 text-white flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse" />
-            <h2 className="text-xs font-black tracking-tight uppercase">
+            <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+            <h2 className="text-xs font-semibold tracking-tight uppercase apple-tight">
               Adding to: {activeEditingOrderName}
             </h2>
           </div>
@@ -64,7 +64,7 @@ export const CurrentSaleTray: React.FC<CurrentSaleTrayProps> = ({
             <button
               type="button"
               onClick={onSaveAndReturnOrder}
-              className="text-xs font-extrabold text-white bg-amber-700/60 hover:bg-amber-700 px-2.5 py-1 rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+              className="text-xs font-semibold text-white bg-amber-700/60 hover:bg-amber-700 px-3 py-1 rounded-full transition-colors cursor-pointer flex items-center gap-1 active:scale-95"
             >
               <ArrowLeft className="w-3 h-3" />
               <span>Done</span>
@@ -72,13 +72,13 @@ export const CurrentSaleTray: React.FC<CurrentSaleTrayProps> = ({
           )}
         </div>
       ) : (
-        <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-100">
+        <div className="flex items-center justify-between px-4 py-3 bg-[#f5f5f7]/60 border-b border-[#e5e5ea]">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse" />
-            <h2 className="text-sm font-extrabold text-slate-900 tracking-tight uppercase">
+            <span className="w-2 h-2 rounded-full bg-[#0066cc]" />
+            <h2 className="text-xs font-semibold text-[#1d1d1f] tracking-wider uppercase apple-tight">
               Current Sale
             </h2>
-            <span className="text-xs font-bold text-slate-500 bg-slate-200/70 px-2 py-0.5 rounded-full">
+            <span className="text-xs font-medium text-[#1d1d1f] bg-[#e5e5ea] px-2 py-0.5 rounded-full">
               {totalItems}
             </span>
           </div>
@@ -87,7 +87,7 @@ export const CurrentSaleTray: React.FC<CurrentSaleTrayProps> = ({
             type="button"
             onClick={onClearCart}
             disabled={isProcessing}
-            className="text-xs text-slate-500 hover:text-rose-600 font-semibold px-2 py-1 rounded-lg transition-colors cursor-pointer"
+            className="text-xs text-[#86868b] hover:text-rose-600 font-medium px-2 py-1 rounded-full transition-colors cursor-pointer"
           >
             Clear
           </button>
@@ -95,7 +95,7 @@ export const CurrentSaleTray: React.FC<CurrentSaleTrayProps> = ({
       )}
 
       {/* Cart Items List */}
-      <div className="p-3 space-y-2.5 max-h-60 sm:max-h-80 overflow-y-auto overscroll-contain divide-y divide-slate-100">
+      <div className="p-3 space-y-2.5 max-h-60 sm:max-h-80 overflow-y-auto overscroll-contain divide-y divide-[#f5f5f7]">
         {cart.map((item) => {
           const itemKey = `${item.product.id}_${item.selectedVariant?.id || 'base'}`;
           const effectivePrice = item.selectedVariant?.price ?? item.selectedVariant?.sellingPrice ?? item.product.sellingPrice;
@@ -110,33 +110,33 @@ export const CurrentSaleTray: React.FC<CurrentSaleTrayProps> = ({
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="text-base select-none">{item.product.emoji}</span>
-                  <span className="text-sm font-extrabold text-slate-900 truncate">
+                  <span className="text-sm font-semibold text-[#1d1d1f] truncate apple-tight">
                     {item.product.name}
                   </span>
                   {isCustomVariant && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#0066cc]/10 text-[#0066cc] border border-[#0066cc]/20">
                       {item.selectedVariant?.name}
                     </span>
                   )}
                 </div>
-                <span className="text-[11px] font-semibold text-slate-400 block pl-6">
+                <span className="text-[11px] font-normal text-[#86868b] block pl-6">
                   {formatCurrency(effectivePrice)} each
                 </span>
               </div>
 
               {/* Stepper with Large (>= 44px) Touch Targets */}
-              <div className="flex items-center gap-1 bg-slate-100/90 rounded-2xl p-1 shrink-0">
+              <div className="flex items-center gap-1 bg-[#f5f5f7] rounded-full p-1 shrink-0">
                 <button
                   type="button"
                   onClick={() => onUpdateQuantity(item.product.id, -1, item.selectedVariant?.id)}
                   disabled={isProcessing}
-                  className="w-11 h-11 flex items-center justify-center rounded-xl bg-white hover:bg-slate-200 active:scale-95 text-slate-700 font-black shadow-2xs transition-all cursor-pointer"
+                  className="w-10 h-10 flex items-center justify-center rounded-full bg-white hover:bg-[#e5e5ea] active:scale-95 text-[#1d1d1f] font-bold shadow-2xs transition-all cursor-pointer border border-[#e5e5ea]"
                   aria-label={`Decrease ${item.product.name} quantity`}
                 >
-                  <Minus className="w-4 h-4 stroke-[3]" />
+                  <Minus className="w-4 h-4 stroke-[2.5]" />
                 </button>
 
-                <span className="w-7 text-center text-base font-black text-slate-900 select-none">
+                <span className="w-7 text-center text-sm font-semibold text-[#1d1d1f] select-none apple-tight">
                   {item.quantity}
                 </span>
 
@@ -144,26 +144,26 @@ export const CurrentSaleTray: React.FC<CurrentSaleTrayProps> = ({
                   type="button"
                   onClick={() => onUpdateQuantity(item.product.id, 1, item.selectedVariant?.id)}
                   disabled={isProcessing || item.quantity >= item.product.stock}
-                  className={`w-11 h-11 flex items-center justify-center rounded-xl font-black shadow-2xs transition-all cursor-pointer ${
+                  className={`w-10 h-10 flex items-center justify-center rounded-full font-bold shadow-2xs transition-all cursor-pointer ${
                     item.quantity >= item.product.stock
-                      ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                      : 'bg-blue-600 hover:bg-blue-700 active:scale-95 text-white'
+                      ? 'bg-[#e5e5ea] text-[#86868b] cursor-not-allowed'
+                      : 'bg-[#0066cc] hover:bg-[#0055b3] active:scale-95 text-white'
                   }`}
                   aria-label={`Increase ${item.product.name} quantity`}
                 >
-                  <Plus className="w-4 h-4 stroke-[3]" />
+                  <Plus className="w-4 h-4 stroke-[2.5]" />
                 </button>
               </div>
 
               {/* Item Total Price */}
               <div className="text-right min-w-[55px] shrink-0">
-                <span className="text-sm font-black text-slate-900 block">
+                <span className="text-sm font-semibold text-[#1d1d1f] block apple-tight">
                   {formatCurrency(effectivePrice * item.quantity)}
                 </span>
                 <button
                   type="button"
                   onClick={() => onRemoveItem(item.product.id, item.selectedVariant?.id)}
-                  className="text-[11px] text-slate-400 hover:text-rose-500 font-medium inline-flex items-center gap-0.5 mt-0.5 cursor-pointer"
+                  className="text-[11px] text-[#86868b] hover:text-rose-500 font-normal inline-flex items-center gap-0.5 mt-0.5 cursor-pointer transition-colors"
                 >
                   <Trash2 className="w-3 h-3" />
                 </button>
@@ -174,36 +174,36 @@ export const CurrentSaleTray: React.FC<CurrentSaleTrayProps> = ({
       </div>
 
       {/* Subtotal */}
-      <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 flex items-baseline justify-between">
-        <span className="text-sm font-extrabold text-slate-600">Subtotal</span>
-        <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+      <div className="px-4 py-3 bg-[#f5f5f7]/60 border-t border-[#e5e5ea] flex items-baseline justify-between">
+        <span className="text-xs font-semibold text-[#86868b] uppercase tracking-wider">Subtotal</span>
+        <span className="text-2xl sm:text-3xl font-bold text-[#1d1d1f] apple-tight tracking-tight">
           {formatCurrency(subtotal)}
         </span>
       </div>
 
       {/* Actions: Normal (PAID, UDHAAR, HOLD) vs Editing Order (SAVE & RETURN) */}
       {activeEditingOrderName ? (
-        <div className="p-3 bg-white space-y-2 border-t border-slate-100">
+        <div className="p-3 bg-white space-y-2 border-t border-[#e5e5ea]">
           <button
             type="button"
             onClick={onSaveAndReturnOrder}
-            className="w-full h-14 rounded-2xl bg-amber-500 hover:bg-amber-600 active:scale-98 text-white font-black text-base flex items-center justify-center gap-2 shadow-sm shadow-amber-500/30 transition-all cursor-pointer"
+            className="w-full h-12 rounded-full bg-amber-500 hover:bg-amber-600 active:scale-[0.98] text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
           >
-            <Check className="w-5 h-5 stroke-[3]" />
+            <Check className="w-4 h-4 stroke-[2.5]" />
             <span>SAVE & RETURN TO TIMELINE</span>
           </button>
         </div>
       ) : (
-        <div className="p-3 bg-white space-y-2 border-t border-slate-100">
+        <div className="p-3 bg-white space-y-2 border-t border-[#e5e5ea]">
           <div className="grid grid-cols-2 gap-2">
-            {/* PAID (Primary Blue CTA) */}
+            {/* PAID (Primary Apple Blue CTA) */}
             <button
               type="button"
               disabled={isProcessing}
               onClick={onPaidSale}
-              className="h-13 sm:h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-base sm:text-lg flex items-center justify-center gap-2 shadow-sm shadow-blue-600/30 tap-press cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50"
+              className="h-12 rounded-full bg-[#0066cc] hover:bg-[#0055b3] text-white font-semibold text-sm sm:text-base flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50"
             >
-              <Check className="w-5 h-5 stroke-[3]" />
+              <Check className="w-4 h-4 stroke-[2.5]" />
               <span>PAID</span>
             </button>
 
@@ -212,22 +212,22 @@ export const CurrentSaleTray: React.FC<CurrentSaleTrayProps> = ({
               type="button"
               disabled={isProcessing}
               onClick={onUdhaarSale}
-              className="h-13 sm:h-14 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white font-black text-base sm:text-lg flex items-center justify-center gap-2 shadow-sm shadow-violet-600/30 tap-press cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50"
+              className="h-12 rounded-full bg-[#5856d6] hover:bg-[#4745b8] text-white font-semibold text-sm sm:text-base flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50"
             >
-              <BookOpen className="w-4 h-4 stroke-[2.5]" />
+              <BookOpen className="w-4 h-4 stroke-[2]" />
               <span>UDHAAR</span>
             </button>
           </div>
 
-          {/* HOLD ORDER (Amber Action) */}
+          {/* HOLD ORDER (Pill Action) */}
           {onHoldOrder && (
             <button
               type="button"
               disabled={isProcessing}
               onClick={onHoldOrder}
-              className="w-full h-11 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/90 font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-98"
+              className="w-full h-10 rounded-full bg-[#f5f5f7] hover:bg-[#e5e5ea] text-[#1d1d1f] border border-[#e5e5ea] font-medium text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.98]"
             >
-              <Clock className="w-4 h-4 text-amber-600" />
+              <Clock className="w-3.5 h-3.5 text-[#86868b]" />
               <span>HOLD ORDER (TIMELINE)</span>
             </button>
           )}

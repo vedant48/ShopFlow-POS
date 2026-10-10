@@ -41,10 +41,10 @@ export const CustomersPage: React.FC = () => {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#1d1d1f] tracking-tight apple-tight">
             Customers & Udhaar
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 font-medium">
+          <p className="text-xs sm:text-sm text-[#86868b] font-normal">
             Track customer balances, credit accounts, and collect payments
           </p>
         </div>
@@ -52,28 +52,28 @@ export const CustomersPage: React.FC = () => {
         <button
           type="button"
           onClick={() => setIsAddModalOpen(true)}
-          className="h-11 px-4 bg-violet-600 hover:bg-violet-700 text-white font-extrabold text-sm rounded-2xl shadow-xs shadow-violet-600/30 flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0"
+          className="h-10 px-4 bg-[#5856d6] hover:bg-[#4745b8] text-white font-semibold text-xs rounded-full shadow-2xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0 active:scale-95"
         >
-          <Plus className="w-4 h-4 stroke-[3]" />
+          <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
           <span>New Customer</span>
         </button>
       </div>
 
-      {/* Top Udhaar Summary Banner */}
-      <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-violet-900 via-indigo-900 to-slate-900 text-white shadow-sm flex items-center justify-between">
+      {/* Top Udhaar Summary Banner (Apple Light Utility Card) */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#e5e5ea] text-[#1d1d1f] shadow-2xs flex items-center justify-between">
         <div>
-          <span className="text-[11px] font-black uppercase tracking-wider text-violet-200 block">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#86868b] block">
             Total Outstanding Udhaar
           </span>
-          <div className="text-2xl sm:text-3xl font-black tracking-tight mt-0.5">
+          <div className="text-2xl sm:text-3xl font-bold tracking-tight text-[#1d1d1f] mt-0.5 apple-tight">
             {formatCurrency(totalOutstandingUdhaar)}
           </div>
-          <span className="text-xs text-violet-200 mt-1 block font-medium">
+          <span className="text-xs text-[#86868b] mt-0.5 block font-normal">
             Across {udhaarCustomersCount} customers with active balance
           </span>
         </div>
 
-        <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-white text-2xl">
+        <div className="w-12 h-12 rounded-full bg-[#5856d6]/10 text-[#5856d6] flex items-center justify-center text-xl shrink-0">
           📖
         </div>
       </div>
@@ -81,13 +81,13 @@ export const CustomersPage: React.FC = () => {
       {/* Search and Filters */}
       <div className="flex flex-col sm:flex-row gap-2.5">
         <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#86868b] pointer-events-none" />
           <input
             type="text"
             placeholder="Search customer by name or mobile..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full h-11 pl-10 pr-3 bg-white border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-violet-500 shadow-2xs"
+            className="w-full h-10 pl-10 pr-3.5 bg-white border border-[#e5e5ea] rounded-full text-sm font-normal text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#5856d6] shadow-2xs placeholder:text-[#86868b]"
           />
         </div>
 
@@ -95,10 +95,10 @@ export const CustomersPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setFilterMode('all')}
-            className={`px-4 h-11 rounded-2xl text-xs sm:text-sm font-extrabold transition-colors cursor-pointer ${
+            className={`px-4 h-10 rounded-full text-xs font-semibold transition-colors cursor-pointer active:scale-95 ${
               filterMode === 'all'
-                ? 'bg-slate-900 text-white'
-                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                ? 'bg-[#1d1d1f] text-white'
+                : 'bg-white text-[#1d1d1f] border border-[#e5e5ea] hover:bg-[#f5f5f7]'
             }`}
           >
             All ({customers.length})
@@ -106,15 +106,15 @@ export const CustomersPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setFilterMode('udhaarOnly')}
-            className={`px-4 h-11 rounded-2xl text-xs sm:text-sm font-extrabold flex items-center gap-1.5 transition-colors cursor-pointer ${
+            className={`px-4 h-10 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 ${
               filterMode === 'udhaarOnly'
-                ? 'bg-violet-600 text-white'
-                : 'bg-white text-violet-700 border border-violet-200 hover:bg-violet-50'
+                ? 'bg-[#5856d6] text-white'
+                : 'bg-white text-[#5856d6] border border-[#5856d6]/30 hover:bg-[#5856d6]/10'
             }`}
           >
             <span>Dues Only</span>
-            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
-              filterMode === 'udhaarOnly' ? 'bg-violet-800 text-white' : 'bg-violet-100 text-violet-800'
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+              filterMode === 'udhaarOnly' ? 'bg-[#4745b8] text-white' : 'bg-[#5856d6]/10 text-[#5856d6]'
             }`}>
               {udhaarCustomersCount}
             </span>
@@ -124,14 +124,14 @@ export const CustomersPage: React.FC = () => {
 
       {/* Customers List (Requirement 9 & 10) */}
       {isLoading ? (
-        <div className="p-8 text-center text-slate-400 text-sm font-medium">
+        <div className="p-8 text-center text-[#86868b] text-sm font-normal">
           Loading customers...
         </div>
       ) : filteredCustomers.length === 0 ? (
-        <div className="p-10 text-center bg-white rounded-3xl border border-dashed border-slate-200">
+        <div className="p-10 text-center bg-white rounded-2xl border border-dashed border-[#d2d2d7]">
           <p className="text-3xl mb-2">👥</p>
-          <p className="text-sm font-extrabold text-slate-800">No customers found</p>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-sm font-semibold text-[#1d1d1f] apple-tight">No customers found</p>
+          <p className="text-xs text-[#86868b] mt-0.5">
             Click "+ New Customer" above to add an account
           </p>
         </div>
@@ -145,21 +145,21 @@ export const CustomersPage: React.FC = () => {
               <div
                 key={cust.id}
                 onClick={() => setViewingLedgerCustomer(cust)}
-                className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:border-violet-300 hover:shadow-xs transition-all flex items-center justify-between gap-3 cursor-pointer group"
+                className="p-3.5 sm:p-4 rounded-2xl bg-white border border-[#e5e5ea] shadow-2xs hover:border-[#5856d6]/40 transition-all flex items-center justify-between gap-3 cursor-pointer group"
               >
                 {/* Left: Avatar & Name */}
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-2xl bg-violet-100 text-violet-700 font-black text-base flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-[#5856d6]/10 text-[#5856d6] font-semibold text-base flex items-center justify-center shrink-0">
                     {cust.name.slice(0, 1).toUpperCase()}
                   </div>
 
                   <div className="min-w-0">
-                    <h3 className="font-black text-slate-900 group-hover:text-violet-700 text-base leading-tight truncate">
+                    <h3 className="font-semibold text-[#1d1d1f] group-hover:text-[#5856d6] text-base leading-tight truncate apple-tight">
                       {cust.name}
                     </h3>
                     {cust.phone && (
-                      <div className="text-xs text-slate-400 flex items-center gap-1 mt-0.5 font-medium">
-                        <Phone className="w-3 h-3 text-slate-400 shrink-0" />
+                      <div className="text-xs text-[#86868b] flex items-center gap-1 mt-0.5 font-normal">
+                        <Phone className="w-3 h-3 text-[#86868b] shrink-0" />
                         <span>{cust.phone}</span>
                       </div>
                     )}
@@ -170,13 +170,13 @@ export const CustomersPage: React.FC = () => {
                 <div className="flex items-center gap-2.5 shrink-0">
                   <div className="text-right">
                     <span
-                      className={`text-sm sm:text-base font-black ${
-                        hasDue ? 'text-violet-700' : 'text-emerald-600'
+                      className={`text-sm sm:text-base font-bold apple-tight ${
+                        hasDue ? 'text-[#5856d6]' : 'text-emerald-600'
                       }`}
                     >
                       {formatCurrency(due)} due
                     </span>
-                    <span className="block text-[10px] text-slate-400 font-semibold uppercase">
+                    <span className="block text-[10px] text-[#86868b] font-medium uppercase">
                       {hasDue ? 'Outstanding' : 'Cleared'}
                     </span>
                   </div>
@@ -188,9 +188,9 @@ export const CustomersPage: React.FC = () => {
                         e.stopPropagation();
                         setCollectingCustomer(cust);
                       }}
-                      className="h-10 px-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
+                      className="h-9 px-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold text-xs rounded-full shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
                     >
-                      <IndianRupee className="w-3.5 h-3.5 stroke-[2.5]" />
+                      <IndianRupee className="w-3.5 h-3.5 stroke-[2]" />
                       <span className="hidden sm:inline">Collect</span>
                     </button>
                   )}
@@ -201,13 +201,13 @@ export const CustomersPage: React.FC = () => {
                       e.stopPropagation();
                       setEditingCustomer(cust);
                     }}
-                    className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-violet-100 active:scale-95 text-slate-500 hover:text-violet-700 flex items-center justify-center transition-all cursor-pointer"
+                    className="w-8 h-8 rounded-full bg-[#f5f5f7] hover:bg-[#e5e5ea] active:scale-95 text-[#86868b] hover:text-[#1d1d1f] flex items-center justify-center transition-all cursor-pointer"
                     title="Edit customer details"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
 
-                  <ArrowUpRight className="w-4 h-4 text-slate-300 group-hover:text-violet-600 transition-colors hidden sm:block" />
+                  <ArrowUpRight className="w-4 h-4 text-[#86868b] group-hover:text-[#5856d6] transition-colors hidden sm:block" />
                 </div>
               </div>
             );

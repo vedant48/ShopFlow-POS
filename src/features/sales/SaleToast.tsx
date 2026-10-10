@@ -47,22 +47,22 @@ const SaleUndoItem: React.FC<SaleUndoItemProps> = ({ sale, onUndo, onDismiss }) 
   };
 
   return (
-    <div className="pointer-events-auto bg-slate-900 text-white p-3 sm:p-3.5 rounded-2xl shadow-2xl border border-slate-700/80 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4 duration-200">
+    <div className="pointer-events-auto bg-white/95 backdrop-blur-xl text-[#1d1d1f] p-2.5 sm:p-3 rounded-full shadow-xl border border-[#e5e5ea] flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4 duration-200">
       {/* Sale details (Section 11) */}
-      <div className="flex items-center gap-2.5 min-w-0">
-        <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-          <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
+      <div className="flex items-center gap-2.5 min-w-0 pl-1">
+        <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+          <CheckCircle2 className="w-5 h-5 stroke-[2.2]" />
         </div>
         <div className="min-w-0">
-          <div className="text-sm font-black tracking-tight truncate text-emerald-400">
-            ✓ Sale recorded
+          <div className="text-xs font-semibold tracking-tight truncate text-emerald-700 apple-tight">
+            Sale recorded
           </div>
-          <div className="text-xs text-white font-extrabold flex items-center gap-1.5 truncate">
+          <div className="text-xs text-[#1d1d1f] font-semibold flex items-center gap-1.5 truncate apple-tight">
             <span>{formatCurrency(sale.totalAmount)}</span>
-            <span className="text-slate-400 font-normal">·</span>
-            <span>{sale.itemCount || 1} {sale.itemCount === 1 ? 'item' : 'items'}</span>
-            <span className="text-slate-400 font-normal">·</span>
-            <span className="text-blue-300">
+            <span className="text-[#86868b] font-normal">·</span>
+            <span className="text-[#86868b] font-normal">{sale.itemCount || 1} {sale.itemCount === 1 ? 'item' : 'items'}</span>
+            <span className="text-[#86868b] font-normal">·</span>
+            <span className="text-[#0066cc]">
               {sale.paymentStatus === 'PAID'
                 ? sale.paymentMethod || 'CASH'
                 : `UDHAAR (${sale.customerName || 'Customer'})`}
@@ -76,10 +76,10 @@ const SaleUndoItem: React.FC<SaleUndoItemProps> = ({ sale, onUndo, onDismiss }) 
         type="button"
         onClick={handleUndoClick}
         disabled={isUndoing}
-        className="h-11 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-amber-400 hover:text-amber-300 font-black text-sm flex items-center gap-1.5 border border-slate-700 transition-all cursor-pointer shrink-0 disabled:opacity-50"
+        className="h-9 px-3.5 rounded-full bg-[#f5f5f7] hover:bg-[#e5e5ea] active:scale-95 text-[#1d1d1f] font-semibold text-xs flex items-center gap-1.5 border border-[#e5e5ea] transition-all cursor-pointer shrink-0 disabled:opacity-50"
         aria-label="Undo recorded sale"
       >
-        <RotateCcw className={`w-4 h-4 stroke-[2.5] ${isUndoing ? 'animate-spin' : ''}`} />
+        <RotateCcw className={`w-3.5 h-3.5 stroke-[2] ${isUndoing ? 'animate-spin' : ''}`} />
         <span>{isUndoing ? 'Reversing...' : `UNDO (${secondsLeft}s)`}</span>
       </button>
     </div>

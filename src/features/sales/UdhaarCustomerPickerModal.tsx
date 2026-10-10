@@ -139,18 +139,18 @@ export const UdhaarCustomerPickerModal: React.FC<UdhaarCustomerPickerModalProps>
       >
         <div className="space-y-4">
           {/* Customer Summary & Due Breakdown */}
-          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/90 space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+          <div className="p-4 bg-[#f5f5f7]/60 rounded-2xl border border-[#e5e5ea] space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-[#e5e5ea]">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-violet-600 text-white font-black text-lg flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-[#5856d6] text-white font-bold text-base flex items-center justify-center">
                   {selectedCustomer.name.slice(0, 1).toUpperCase()}
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-900 leading-tight">
+                  <h3 className="text-base font-semibold text-[#1d1d1f] leading-tight apple-tight">
                     {selectedCustomer.name}
                   </h3>
                   {selectedCustomer.phone && (
-                    <span className="text-xs text-slate-500 font-medium">
+                    <span className="text-xs text-[#86868b] font-normal">
                       {selectedCustomer.phone}
                     </span>
                   )}
@@ -160,7 +160,7 @@ export const UdhaarCustomerPickerModal: React.FC<UdhaarCustomerPickerModalProps>
               <button
                 type="button"
                 onClick={() => setSelectedCustomer(null)}
-                className="text-xs font-bold text-violet-600 hover:text-violet-800 cursor-pointer"
+                className="text-xs font-semibold text-[#5856d6] hover:text-[#4745b8] cursor-pointer"
               >
                 Change
               </button>
@@ -168,23 +168,23 @@ export const UdhaarCustomerPickerModal: React.FC<UdhaarCustomerPickerModalProps>
 
             {/* Calculations Breakdown */}
             <div className="space-y-1.5 text-xs sm:text-sm">
-              <div className="flex items-center justify-between text-slate-600">
+              <div className="flex items-center justify-between text-[#86868b]">
                 <span>Current due:</span>
-                <span className="font-bold text-slate-800">
+                <span className="font-semibold text-[#1d1d1f]">
                   {formatCurrency(currentDue)}
                 </span>
               </div>
-              <div className="flex items-center justify-between text-slate-600">
+              <div className="flex items-center justify-between text-[#86868b]">
                 <span>This sale:</span>
-                <span className="font-bold text-violet-700">
+                <span className="font-semibold text-[#5856d6]">
                   +{formatCurrency(thisSale)}
                 </span>
               </div>
-              <div className="pt-2 border-t border-slate-200 flex items-baseline justify-between">
-                <span className="text-sm font-extrabold text-slate-900">
+              <div className="pt-2 border-t border-[#e5e5ea] flex items-baseline justify-between">
+                <span className="text-sm font-semibold text-[#1d1d1f] apple-tight">
                   New balance:
                 </span>
-                <span className="text-2xl font-black text-violet-700">
+                <span className="text-2xl font-bold text-[#5856d6] apple-tight">
                   {formatCurrency(newBalance)}
                 </span>
               </div>
@@ -196,16 +196,16 @@ export const UdhaarCustomerPickerModal: React.FC<UdhaarCustomerPickerModalProps>
             <button
               type="button"
               onClick={handleFinalConfirm}
-              className="w-full h-14 sm:h-16 rounded-2xl bg-violet-600 hover:bg-violet-700 active:scale-98 text-white font-black text-lg sm:text-xl flex items-center justify-center gap-2 shadow-sm shadow-violet-600/30 transition-all cursor-pointer"
+              className="w-full h-12 rounded-full bg-[#5856d6] hover:bg-[#4745b8] active:scale-[0.98] text-white font-semibold text-base flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
             >
-              <Check className="w-6 h-6 stroke-[3]" />
+              <Check className="w-5 h-5 stroke-[2.5]" />
               <span>CONFIRM UDHAAR</span>
             </button>
 
             <button
               type="button"
               onClick={() => setSelectedCustomer(null)}
-              className="w-full py-2.5 text-xs font-bold text-slate-500 hover:text-slate-700 flex items-center justify-center gap-1 cursor-pointer"
+              className="w-full h-10 rounded-full bg-[#f5f5f7] hover:bg-[#e5e5ea] text-xs font-medium text-[#1d1d1f] flex items-center justify-center gap-1 cursor-pointer transition-colors active:scale-[0.98]"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to customer list</span>
@@ -230,13 +230,13 @@ export const UdhaarCustomerPickerModal: React.FC<UdhaarCustomerPickerModalProps>
             {/* Search Customer Input & + Add Customer button */}
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#86868b]" />
                 <input
                   type="text"
                   placeholder="Search customer name or phone..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full h-11 pl-10 pr-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  className="w-full h-10 pl-10 pr-3.5 bg-white border border-[#e5e5ea] rounded-full text-sm font-normal text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#5856d6] placeholder:text-[#86868b]"
                   autoFocus
                 />
               </div>
@@ -245,9 +245,9 @@ export const UdhaarCustomerPickerModal: React.FC<UdhaarCustomerPickerModalProps>
               <button
                 type="button"
                 onClick={() => setIsAddingNew(true)}
-                className="h-11 px-3.5 bg-violet-50 hover:bg-violet-100 text-violet-700 font-extrabold text-xs sm:text-sm rounded-2xl border border-violet-200 flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
+                className="h-10 px-3.5 bg-white hover:bg-[#f5f5f7] text-[#5856d6] font-semibold text-xs rounded-full border border-[#5856d6]/30 flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 active:scale-95"
               >
-                <Plus className="w-4 h-4 stroke-[3]" />
+                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span>Add Customer</span>
               </button>
             </div>
@@ -263,26 +263,26 @@ export const UdhaarCustomerPickerModal: React.FC<UdhaarCustomerPickerModalProps>
                     key={cust.id}
                     type="button"
                     onClick={() => setSelectedCustomer(cust)}
-                    className="w-full min-h-[52px] p-3 rounded-2xl bg-white border border-slate-200/90 hover:border-violet-500 hover:bg-violet-50/20 active:scale-[0.99] flex items-center justify-between text-left transition-all cursor-pointer shadow-2xs group"
+                    className="w-full min-h-[52px] p-3 rounded-2xl bg-white border border-[#e5e5ea] hover:border-[#5856d6]/40 hover:bg-[#5856d6]/5 active:scale-[0.99] flex items-center justify-between text-left transition-all cursor-pointer shadow-2xs group"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-9 h-9 rounded-xl bg-violet-100 text-violet-700 font-black text-sm flex items-center justify-center shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-[#5856d6]/10 text-[#5856d6] font-semibold text-sm flex items-center justify-center shrink-0">
                         {cust.name.slice(0, 1).toUpperCase()}
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <span className="font-extrabold text-slate-900 group-hover:text-violet-700 text-sm sm:text-base leading-tight truncate">
+                          <span className="font-semibold text-[#1d1d1f] group-hover:text-[#5856d6] text-sm sm:text-base leading-tight truncate apple-tight">
                             {cust.name}
                           </span>
                           {isRecent && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 bg-violet-50 text-violet-700 text-[10px] font-black rounded-md">
+                            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 bg-[#5856d6]/10 text-[#5856d6] text-[10px] font-medium rounded-full">
                               <Sparkles className="w-2.5 h-2.5" />
                               Recent
                             </span>
                           )}
                         </div>
                         {cust.phone && (
-                          <span className="text-[11px] text-slate-400 font-medium">
+                          <span className="text-[11px] text-[#86868b] font-normal">
                             {cust.phone}
                           </span>
                         )}
@@ -291,8 +291,8 @@ export const UdhaarCustomerPickerModal: React.FC<UdhaarCustomerPickerModalProps>
 
                     <div className="text-right shrink-0 pl-2">
                       <span
-                        className={`text-xs sm:text-sm font-black ${
-                          due > 0 ? 'text-violet-700' : 'text-slate-500'
+                        className={`text-xs sm:text-sm font-semibold apple-tight ${
+                          due > 0 ? 'text-[#5856d6]' : 'text-[#86868b]'
                         }`}
                       >
                         Due {formatCurrency(due)}
@@ -304,24 +304,24 @@ export const UdhaarCustomerPickerModal: React.FC<UdhaarCustomerPickerModalProps>
 
               {/* Section 15: Empty States */}
               {customers.length === 0 ? (
-                <div className="text-center py-8 bg-slate-50 rounded-2xl border border-dashed border-slate-200 p-4 space-y-1">
+                <div className="text-center py-8 bg-white rounded-2xl border border-dashed border-[#d2d2d7] p-4 space-y-1">
                   <p className="text-2xl">👥</p>
-                  <h4 className="text-sm font-extrabold text-slate-800">No customers yet</h4>
-                  <p className="text-xs text-slate-500">
+                  <h4 className="text-sm font-semibold text-[#1d1d1f] apple-tight">No customers yet</h4>
+                  <p className="text-xs text-[#86868b]">
                     Add a customer when someone buys on Udhaar.
                   </p>
                   <button
                     type="button"
                     onClick={() => setIsAddingNew(true)}
-                    className="mt-2 px-3 py-1.5 bg-violet-600 text-white font-bold text-xs rounded-xl cursor-pointer"
+                    className="mt-2 px-3.5 py-1.5 bg-[#5856d6] text-white font-semibold text-xs rounded-full cursor-pointer active:scale-95 transition-all"
                   >
                     + Add First Customer
                   </button>
                 </div>
               ) : filteredCustomers.length === 0 ? (
-                <div className="text-center py-6 text-slate-500 text-xs">
+                <div className="text-center py-6 text-[#86868b] text-xs">
                   No matching customers found. Click{' '}
-                  <strong className="text-violet-700">+ Add Customer</strong> above.
+                  <strong className="text-[#5856d6] font-semibold">+ Add Customer</strong> above.
                 </div>
               ) : null}
             </div>
@@ -330,7 +330,7 @@ export const UdhaarCustomerPickerModal: React.FC<UdhaarCustomerPickerModalProps>
           /* Minimal New Customer Form (Section 10: Name * required, Phone optional) */
           <form onSubmit={handleCreateCustomer} className="space-y-3.5">
             <div>
-              <label className="block text-xs font-extrabold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-[#1d1d1f] mb-1">
                 Name *
               </label>
               <input
@@ -339,13 +339,13 @@ export const UdhaarCustomerPickerModal: React.FC<UdhaarCustomerPickerModalProps>
                 placeholder="e.g. Rahul"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                className="w-full h-11 px-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-violet-500 focus:outline-none"
+                className="w-full h-10 px-3.5 bg-white border border-[#e5e5ea] rounded-xl text-sm font-normal text-[#1d1d1f] focus:ring-2 focus:ring-[#5856d6] focus:outline-none placeholder:text-[#86868b]"
                 autoFocus
               />
             </div>
 
             <div>
-              <label className="block text-xs font-extrabold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-[#1d1d1f] mb-1">
                 Phone (Optional)
               </label>
               <input
@@ -353,7 +353,7 @@ export const UdhaarCustomerPickerModal: React.FC<UdhaarCustomerPickerModalProps>
                 placeholder="e.g. 9876543210"
                 value={newPhone}
                 onChange={(e) => setNewPhone(e.target.value)}
-                className="w-full h-11 px-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-violet-500 focus:outline-none"
+                className="w-full h-10 px-3.5 bg-white border border-[#e5e5ea] rounded-xl text-sm font-normal text-[#1d1d1f] focus:ring-2 focus:ring-[#5856d6] focus:outline-none placeholder:text-[#86868b]"
               />
             </div>
 
@@ -361,14 +361,14 @@ export const UdhaarCustomerPickerModal: React.FC<UdhaarCustomerPickerModalProps>
               <button
                 type="button"
                 onClick={() => setIsAddingNew(false)}
-                className="flex-1 h-12 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs sm:text-sm rounded-xl cursor-pointer"
+                className="flex-1 h-11 bg-[#f5f5f7] hover:bg-[#e5e5ea] text-[#1d1d1f] font-semibold text-xs sm:text-sm rounded-full cursor-pointer transition-colors active:scale-95"
               >
                 Back to List
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting || !newName.trim()}
-                className="flex-1 h-12 bg-violet-600 hover:bg-violet-700 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-xs cursor-pointer disabled:opacity-50"
+                className="flex-1 h-11 bg-[#5856d6] hover:bg-[#4745b8] text-white font-semibold text-xs sm:text-sm rounded-full shadow-2xs cursor-pointer disabled:opacity-50 active:scale-95 transition-all"
               >
                 {isSubmitting ? 'Creating...' : 'Select & Continue'}
               </button>

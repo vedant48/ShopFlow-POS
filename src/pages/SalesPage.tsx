@@ -37,17 +37,17 @@ export const SalesPage: React.FC = () => {
       {/* Page Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#1d1d1f] tracking-tight apple-tight">
             Sales History
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 font-medium">
+          <p className="text-xs sm:text-sm text-[#86868b] font-normal">
             Recent counter transactions, customer bills, and receipts
           </p>
         </div>
 
         <div className="text-right">
-          <span className="text-xs text-slate-400 font-semibold block">Total Revenue Recorded</span>
-          <span className="text-lg sm:text-xl font-black text-slate-900">
+          <span className="text-xs text-[#86868b] font-medium block">Total Revenue Recorded</span>
+          <span className="text-lg sm:text-xl font-bold text-[#1d1d1f] apple-tight">
             {formatCurrency(totalPaidRevenue)}
           </span>
         </div>
@@ -56,13 +56,13 @@ export const SalesPage: React.FC = () => {
       {/* Search and Filters */}
       <div className="flex flex-col sm:flex-row gap-2.5">
         <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#86868b] pointer-events-none" />
           <input
             type="text"
             placeholder="Search by bill number or customer name..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full h-11 pl-10 pr-3 bg-white border border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
+            className="w-full h-10 pl-10 pr-3.5 bg-white border border-[#e5e5ea] rounded-full text-sm font-normal text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#0066cc] shadow-2xs placeholder:text-[#86868b]"
           />
         </div>
 
@@ -70,10 +70,10 @@ export const SalesPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setStatusFilter('ALL')}
-            className={`px-3.5 h-11 rounded-2xl text-xs sm:text-sm font-extrabold transition-colors cursor-pointer ${
+            className={`px-4 h-10 rounded-full text-xs font-semibold transition-colors cursor-pointer active:scale-95 ${
               statusFilter === 'ALL'
-                ? 'bg-slate-900 text-white'
-                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                ? 'bg-[#1d1d1f] text-white'
+                : 'bg-white text-[#1d1d1f] border border-[#e5e5ea] hover:bg-[#f5f5f7]'
             }`}
           >
             All ({totalSalesCount})
@@ -81,7 +81,7 @@ export const SalesPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setStatusFilter('PAID')}
-            className={`px-3.5 h-11 rounded-2xl text-xs sm:text-sm font-extrabold transition-colors cursor-pointer ${
+            className={`px-4 h-10 rounded-full text-xs font-semibold transition-colors cursor-pointer active:scale-95 ${
               statusFilter === 'PAID'
                 ? 'bg-emerald-600 text-white'
                 : 'bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50'
@@ -92,10 +92,10 @@ export const SalesPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setStatusFilter('UDHAAR')}
-            className={`px-3.5 h-11 rounded-2xl text-xs sm:text-sm font-extrabold transition-colors cursor-pointer ${
+            className={`px-4 h-10 rounded-full text-xs font-semibold transition-colors cursor-pointer active:scale-95 ${
               statusFilter === 'UDHAAR'
-                ? 'bg-violet-600 text-white'
-                : 'bg-white text-violet-700 border border-violet-200 hover:bg-violet-50'
+                ? 'bg-[#5856d6] text-white'
+                : 'bg-white text-[#5856d6] border border-[#5856d6]/30 hover:bg-[#5856d6]/10'
             }`}
           >
             Udhaar
@@ -105,12 +105,12 @@ export const SalesPage: React.FC = () => {
 
       {/* Sales List */}
       {isLoading ? (
-        <div className="p-8 text-center text-slate-400 text-sm font-medium">Loading sales...</div>
+        <div className="p-8 text-center text-[#86868b] text-sm font-normal">Loading sales...</div>
       ) : filteredSales.length === 0 ? (
-        <div className="p-12 text-center bg-white rounded-3xl border border-dashed border-slate-200">
+        <div className="p-12 text-center bg-white rounded-2xl border border-dashed border-[#d2d2d7]">
           <p className="text-3xl mb-2">🧾</p>
-          <p className="text-sm font-extrabold text-slate-800">No sales recorded yet</p>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-sm font-semibold text-[#1d1d1f] apple-tight">No sales recorded yet</p>
+          <p className="text-xs text-[#86868b] mt-1">
             Complete a Quick Sale on the Home tab to see it here!
           </p>
         </div>
@@ -127,15 +127,15 @@ export const SalesPage: React.FC = () => {
               <div
                 key={sale.id}
                 onClick={() => setSelectedSale(sale)}
-                className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-xs hover:border-slate-300 transition-all flex items-center justify-between gap-3 cursor-pointer group"
+                className="p-3.5 sm:p-4 rounded-2xl bg-white border border-[#e5e5ea] shadow-2xs hover:shadow-xs hover:border-[#0066cc]/40 transition-all flex items-center justify-between gap-3 cursor-pointer group"
               >
                 {/* Left: Bill icon & Details */}
                 <div className="flex items-center gap-3 min-w-0">
                   <div
-                    className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
+                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
                       isPaid
                         ? 'bg-emerald-50 text-emerald-700'
-                        : 'bg-violet-50 text-violet-700'
+                        : 'bg-[#5856d6]/10 text-[#5856d6]'
                     }`}
                   >
                     <Receipt className="w-5 h-5" />
@@ -143,20 +143,20 @@ export const SalesPage: React.FC = () => {
 
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono font-black text-slate-900 text-sm">
+                      <span className="font-mono font-bold text-[#1d1d1f] text-sm">
                         {sale.saleNumber}
                       </span>
-                      <span className="text-slate-300 font-bold">&bull;</span>
+                      <span className="text-[#86868b] font-bold">&bull;</span>
                       <span
-                        className={`text-xs sm:text-sm font-extrabold truncate ${
-                          isPaid ? 'text-slate-700' : 'text-violet-700'
+                        className={`text-xs sm:text-sm font-semibold truncate apple-tight ${
+                          isPaid ? 'text-[#1d1d1f]' : 'text-[#5856d6]'
                         }`}
                       >
                         {customerName}
                       </span>
                     </div>
 
-                    <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5 font-medium">
+                    <div className="text-[11px] text-[#86868b] flex items-center gap-2 mt-0.5 font-normal">
                       <span>{formatDateTime(sale.createdAt)}</span>
                       <span>&bull;</span>
                       <span>{sale.itemCount} {sale.itemCount === 1 ? 'item' : 'items'}</span>
@@ -167,7 +167,7 @@ export const SalesPage: React.FC = () => {
                 {/* Right: Total Amount and Status Badge */}
                 <div className="text-right shrink-0 flex items-center gap-3">
                   <div>
-                    <div className="text-base sm:text-lg font-black text-slate-900 leading-tight">
+                    <div className="text-base sm:text-lg font-bold text-[#1d1d1f] leading-tight apple-tight">
                       {formatCurrency(sale.totalAmount)}
                     </div>
                     <div className="mt-0.5">
@@ -187,7 +187,7 @@ export const SalesPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <ArrowUpRight className="w-4 h-4 text-slate-300 group-hover:text-slate-600 transition-colors hidden sm:block" />
+                  <ArrowUpRight className="w-4 h-4 text-[#86868b] group-hover:text-[#1d1d1f] transition-colors hidden sm:block" />
                 </div>
               </div>
             );

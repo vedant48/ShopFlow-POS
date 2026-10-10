@@ -76,11 +76,11 @@ export const PaymentMethodModal: React.FC<PaymentMethodModalProps> = ({
     >
       <div className="space-y-4">
         {/* Total Amount Pill */}
-        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-center">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+        <div className="p-4 bg-[#f5f5f7]/60 rounded-2xl border border-[#e5e5ea] text-center">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-[#86868b] block">
             Total Amount Due
           </span>
-          <div className="text-3xl font-black text-slate-900 mt-0.5">
+          <div className="text-3xl font-bold text-[#1d1d1f] mt-0.5 apple-tight">
             {formatCurrency(totalAmount)}
           </div>
         </div>
@@ -92,22 +92,22 @@ export const PaymentMethodModal: React.FC<PaymentMethodModalProps> = ({
             type="button"
             disabled={isProcessing}
             onClick={() => handleSelect('CASH')}
-            className={`relative p-5 rounded-2xl border-2 flex flex-col items-center justify-center gap-2.5 transition-all cursor-pointer tap-press active:scale-[0.98] ${
+            className={`relative p-5 rounded-2xl border-2 flex flex-col items-center justify-center gap-2.5 transition-all cursor-pointer active:scale-[0.98] ${
               lastMethod === 'CASH'
-                ? 'bg-blue-50/40 border-blue-600 shadow-sm ring-2 ring-blue-500/20'
-                : 'bg-white border-slate-200 hover:border-slate-300'
+                ? 'bg-[#0066cc]/5 border-[#0066cc] shadow-2xs'
+                : 'bg-white border-[#e5e5ea] hover:border-[#d2d2d7]'
             }`}
           >
             {lastMethod === 'CASH' && (
-              <span className="absolute top-2 right-2 text-[10px] font-black uppercase tracking-wider bg-blue-600 text-white px-2 py-0.5 rounded-full">
+              <span className="absolute top-2.5 right-2.5 text-[10px] font-semibold uppercase tracking-wider bg-[#0066cc] text-white px-2 py-0.5 rounded-full">
                 Last used
               </span>
             )}
-            <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
-              <Banknote className="w-7 h-7 stroke-[2.2]" />
+            <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center">
+              <Banknote className="w-6 h-6 stroke-[2.2]" />
             </div>
-            <span className="text-base font-black text-slate-900">CASH</span>
-            <span className="text-[11px] font-medium text-slate-500 -mt-1">Physical notes</span>
+            <span className="text-base font-bold text-[#1d1d1f] apple-tight">CASH</span>
+            <span className="text-[11px] font-normal text-[#86868b] -mt-1">Physical notes</span>
           </button>
 
           {/* UPI Button */}
@@ -115,22 +115,22 @@ export const PaymentMethodModal: React.FC<PaymentMethodModalProps> = ({
             type="button"
             disabled={isProcessing}
             onClick={() => handleSelect('UPI')}
-            className={`relative p-5 rounded-2xl border-2 flex flex-col items-center justify-center gap-2.5 transition-all cursor-pointer tap-press active:scale-[0.98] ${
+            className={`relative p-5 rounded-2xl border-2 flex flex-col items-center justify-center gap-2.5 transition-all cursor-pointer active:scale-[0.98] ${
               lastMethod === 'UPI'
-                ? 'bg-blue-50/40 border-blue-600 shadow-sm ring-2 ring-blue-500/20'
-                : 'bg-white border-slate-200 hover:border-slate-300'
+                ? 'bg-[#0066cc]/5 border-[#0066cc] shadow-2xs'
+                : 'bg-white border-[#e5e5ea] hover:border-[#d2d2d7]'
             }`}
           >
             {lastMethod === 'UPI' && (
-              <span className="absolute top-2 right-2 text-[10px] font-black uppercase tracking-wider bg-blue-600 text-white px-2 py-0.5 rounded-full">
+              <span className="absolute top-2.5 right-2.5 text-[10px] font-semibold uppercase tracking-wider bg-[#0066cc] text-white px-2 py-0.5 rounded-full">
                 Last used
               </span>
             )}
-            <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center">
-              <QrCode className="w-7 h-7 stroke-[2.2]" />
+            <div className="w-12 h-12 rounded-full bg-[#0066cc]/10 text-[#0066cc] flex items-center justify-center">
+              <QrCode className="w-6 h-6 stroke-[2.2]" />
             </div>
-            <span className="text-base font-black text-slate-900">UPI</span>
-            <span className="text-[11px] font-medium text-slate-500 -mt-1">GPay / PhonePe / Paytm</span>
+            <span className="text-base font-bold text-[#1d1d1f] apple-tight">UPI</span>
+            <span className="text-[11px] font-normal text-[#86868b] -mt-1">GPay / PhonePe / Paytm</span>
           </button>
         </div>
 
@@ -138,7 +138,7 @@ export const PaymentMethodModal: React.FC<PaymentMethodModalProps> = ({
           type="button"
           onClick={onClose}
           disabled={isProcessing}
-          className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+          className="w-full h-11 bg-[#f5f5f7] hover:bg-[#e5e5ea] text-[#1d1d1f] font-semibold text-xs rounded-full cursor-pointer transition-colors active:scale-[0.98]"
         >
           Cancel
         </button>
