@@ -40,6 +40,7 @@ interface StorageCounts {
   payments: number;
   purchases: number;
   expenses: number;
+  openOrders: number;
 }
 
 export const SettingsPage: React.FC = () => {
@@ -115,6 +116,7 @@ export const SettingsPage: React.FC = () => {
     payments: 0,
     purchases: 0,
     expenses: 0,
+    openOrders: 0,
   });
   const [isRequestingPersist, setIsRequestingPersist] = useState(false);
   const [installSuccessNotice, setInstallSuccessNotice] = useState<string | null>(null);
@@ -220,15 +222,16 @@ export const SettingsPage: React.FC = () => {
   const loadCounts = async () => {
     try {
       const activeShopId = authService.getCurrentShopId();
-      const [products, sales, customers, payments, purchases, expenses] = await Promise.all([
+      const [products, sales, customers, payments, purchases, expenses, openOrders] = await Promise.all([
         db.products.filter((p) => (p.shopId || DEFAULT_DEMO_SHOP_ID) === activeShopId).count(),
         db.sales.filter((s) => (s.shopId || DEFAULT_DEMO_SHOP_ID) === activeShopId).count(),
         db.customers.filter((c) => (c.shopId || DEFAULT_DEMO_SHOP_ID) === activeShopId).count(),
         db.payments.filter((p) => (p.shopId || DEFAULT_DEMO_SHOP_ID) === activeShopId).count(),
         db.purchases.filter((p) => (p.shopId || DEFAULT_DEMO_SHOP_ID) === activeShopId).count(),
         db.expenses.filter((e) => (e.shopId || DEFAULT_DEMO_SHOP_ID) === activeShopId).count(),
+        db.openOrders.filter((o) => (o.shopId || DEFAULT_DEMO_SHOP_ID) === activeShopId && o.status === 'OPEN').count(),
       ]);
-      setCounts({ products, sales, customers, payments, purchases, expenses });
+      setCounts({ products, sales, customers, payments, purchases, expenses, openOrders });
     } catch (err) {
       console.error('Failed to load storage counts', err);
     }
@@ -443,7 +446,8 @@ export const SettingsPage: React.FC = () => {
     counts.customers > 0 ||
     counts.payments > 0 ||
     counts.purchases > 0 ||
-    counts.expenses > 0;
+    counts.expenses > 0 ||
+    counts.openOrders > 0;
 
   const isBackupStale =
     isOnline &&
@@ -1149,7 +1153,7 @@ export const SettingsPage: React.FC = () => {
                       {cloudPreviewError}
                     </div>
                   ) : (
-                    <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-200/60 text-center">
+                    <div className="grid grid-cols-4 gap-2 pt-1 border-t border-slate-200/60 text-center">
                       <div className="bg-white p-2 rounded-lg border border-slate-200/80">
                         <span className="text-[10px] text-slate-400 font-semibold block">Products</span>
                         <strong className="text-xs text-slate-900">
@@ -1166,6 +1170,12 @@ export const SettingsPage: React.FC = () => {
                         <span className="text-[10px] text-slate-400 font-semibold block">Sales</span>
                         <strong className="text-xs text-blue-700">
                           {cloudPreview?.counts?.sales ?? '—'}
+                        </strong>
+                      </div>
+                      <div className="bg-white p-2 rounded-lg border border-slate-200/80">
+                        <span className="text-[10px] text-slate-400 font-semibold block">Open Orders</span>
+                        <strong className="text-xs text-amber-700">
+                          {cloudPreview?.counts?.openOrders ?? '—'}
                         </strong>
                       </div>
                     </div>
@@ -1316,7 +1326,7 @@ export const SettingsPage: React.FC = () => {
                           : 'Recently'}
                       </p>
 
-                      <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-200 text-center">
+                      <div className="grid grid-cols-4 gap-2 pt-1 border-t border-slate-200 text-center">
                         <div className="bg-white p-2 rounded-lg border border-slate-200/80">
                           <span className="text-[10px] text-slate-400 font-semibold block">Products</span>
                           <strong className="text-xs text-slate-900">
@@ -1333,6 +1343,12 @@ export const SettingsPage: React.FC = () => {
                           <span className="text-[10px] text-slate-400 font-semibold block">Sales</span>
                           <strong className="text-xs text-blue-700">
                             {selectedFileValidation.counts?.sales}
+                          </strong>
+                        </div>
+                        <div className="bg-white p-2 rounded-lg border border-slate-200/80">
+                          <span className="text-[10px] text-slate-400 font-semibold block">Open Orders</span>
+                          <strong className="text-xs text-amber-700">
+                            {selectedFileValidation.counts?.openOrders ?? 0}
                           </strong>
                         </div>
                       </div>

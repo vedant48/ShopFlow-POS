@@ -242,6 +242,8 @@ class ApiClient {
     inventoryMovements: any[];
     expenses: any[];
     suppliers: any[];
+    openOrders?: any[];
+    openOrderItems?: any[];
   }> {
     const effectiveShopId = this.getShopId(shopId);
     return this.request(`/bootstrap?shopId=${encodeURIComponent(effectiveShopId)}`, {}, effectiveShopId);

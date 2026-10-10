@@ -1,6 +1,6 @@
 import Dexie from 'dexie';
 import { db } from '../db';
-import type { SyncQueueItem, SyncOperation, SyncStatus } from '../types';
+import type { SyncQueueItem, SyncOperation, SyncStatus, OpenOrderStatus } from '../types';
 import { generateId } from '../lib/utils';
 import { api, DEFAULT_DEMO_SHOP_ID } from '../lib/api';
 import { diagnostics } from '../lib/instrumentation';
@@ -680,6 +680,7 @@ class SyncService {
       payments: number;
       purchases: number;
       expenses: number;
+      openOrders?: number;
       total: number;
     };
     error?: string;
@@ -693,13 +694,15 @@ class SyncService {
         payments: data.payments?.length || 0,
         purchases: data.purchases?.length || 0,
         expenses: data.expenses?.length || 0,
+        openOrders: data.openOrders?.length || 0,
         total:
           (data.products?.length || 0) +
           (data.customers?.length || 0) +
           (data.sales?.length || 0) +
           (data.payments?.length || 0) +
           (data.purchases?.length || 0) +
-          (data.expenses?.length || 0),
+          (data.expenses?.length || 0) +
+          (data.openOrders?.length || 0),
       };
       return {
         success: true,
@@ -741,6 +744,8 @@ class SyncService {
           db.suppliers,
           db.inventoryMovements,
           db.expenses,
+          db.openOrders,
+          db.openOrderItems,
         ],
         async () => {
           // Clear current local records for this shop to prevent duplicates
@@ -756,6 +761,8 @@ class SyncService {
             db.suppliers.filter((s) => (s.shopId || DEFAULT_DEMO_SHOP_ID) === targetShopId).delete(),
             db.inventoryMovements.filter((im) => (im.shopId || DEFAULT_DEMO_SHOP_ID) === targetShopId).delete(),
             db.expenses.filter((e) => (e.shopId || DEFAULT_DEMO_SHOP_ID) === targetShopId).delete(),
+            db.openOrders.filter((oo) => (oo.shopId || DEFAULT_DEMO_SHOP_ID) === targetShopId).delete(),
+            db.openOrderItems.filter((oi) => (oi.shopId || DEFAULT_DEMO_SHOP_ID) === targetShopId).delete(),
           ]);
 
           // 1. Categories
@@ -988,6 +995,52 @@ class SyncService {
               count++;
             }
           }
+          // 10. Open Orders (Parents first)
+          if (data.openOrders && data.openOrders.length > 0) {
+            for (const ord of data.openOrders) {
+              await db.openOrders.put({
+                id: ord.id,
+                shopId: targetShopId,
+                customerId: ord.customer_id || ord.customerId || null,
+                temporaryCustomerName: ord.temporary_customer_name || ord.temporaryCustomerName || null,
+                status: (ord.status || 'OPEN') as OpenOrderStatus,
+                totalAmount: Number(ord.total_amount ?? ord.totalAmount ?? 0),
+                itemCount: Number(ord.item_count ?? ord.itemCount ?? 0),
+                note: ord.note || null,
+                saleId: ord.sale_id || ord.saleId || null,
+                lastActivityAt: ord.last_activity_at || ord.lastActivityAt || ord.created_at || ord.createdAt || new Date().toISOString(),
+                createdAt: ord.created_at || ord.createdAt || new Date().toISOString(),
+                updatedAt: ord.updated_at || ord.updatedAt || new Date().toISOString(),
+              });
+              count++;
+            }
+          }
+
+          // 11. Open Order Items (Children)
+          if (data.openOrderItems && data.openOrderItems.length > 0) {
+            for (const oi of data.openOrderItems) {
+              const unitPrice = Number(oi.unit_price ?? oi.unitPrice ?? 0);
+              const quantity = Number(oi.quantity || 1);
+              const totalPrice = Number(oi.total_price ?? oi.totalPrice ?? (unitPrice * quantity));
+
+              await db.openOrderItems.put({
+                id: oi.id,
+                shopId: targetShopId,
+                openOrderId: oi.open_order_id || oi.openOrderId,
+                productId: oi.product_id || oi.productId,
+                productName: oi.product_name || oi.productName || 'Product',
+                productEmoji: oi.product_emoji || oi.productEmoji || '📦',
+                variantId: oi.variant_id || oi.variantId || undefined,
+                variantName: oi.variant_name || oi.variantName || undefined,
+                quantity,
+                unitPrice,
+                totalPrice,
+                createdAt: oi.created_at || oi.createdAt || new Date().toISOString(),
+                updatedAt: oi.updated_at || oi.updatedAt || new Date().toISOString(),
+              });
+              count++;
+            }
+          }
         }
       );
 
@@ -1011,6 +1064,8 @@ class SyncService {
           payments: data.payments?.length || 0,
           purchases: data.purchases?.length || 0,
           expenses: data.expenses?.length || 0,
+          openOrders: data.openOrders?.length || 0,
+          openOrderItems: data.openOrderItems?.length || 0,
         },
       };
     } catch (err: any) {

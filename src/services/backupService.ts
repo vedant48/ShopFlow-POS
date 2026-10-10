@@ -54,6 +54,7 @@ export interface BackupValidationResult {
     payments: number;
     purchases: number;
     expenses: number;
+    openOrders?: number;
     total: number;
   };
 }
@@ -72,6 +73,8 @@ export interface RestoreResult {
     purchases: number;
     inventoryMovements: number;
     expenses: number;
+    openOrders?: number;
+    openOrderItems?: number;
     total: number;
   };
 }
@@ -280,6 +283,32 @@ class BackupService {
       }
     }
 
+    if (d.openOrders !== undefined && !Array.isArray(d.openOrders)) {
+      return {
+        valid: false,
+        error: 'Backup file is invalid or unsupported.',
+      };
+    }
+
+    if (d.openOrderItems !== undefined && !Array.isArray(d.openOrderItems)) {
+      return {
+        valid: false,
+        error: 'Backup file is invalid or unsupported.',
+      };
+    }
+
+    if (Array.isArray(d.openOrders) && Array.isArray(d.openOrderItems) && d.openOrders.length > 0) {
+      const orderIdSet = new Set<string>(d.openOrders.map((o: any) => o.id));
+      for (const oi of d.openOrderItems) {
+        if (oi.openOrderId && !orderIdSet.has(oi.openOrderId)) {
+          return {
+            valid: false,
+            error: `Open order item "${oi.productName || oi.id}" references a non-existent open order in this backup.`,
+          };
+        }
+      }
+    }
+
     const counts = {
       categories: backupCats.length,
       brands: backupBrands.length,
@@ -289,13 +318,15 @@ class BackupService {
       payments: Array.isArray(d.payments) ? d.payments.length : 0,
       purchases: Array.isArray(d.purchases) ? d.purchases.length : 0,
       expenses: Array.isArray(d.expenses) ? d.expenses.length : 0,
+      openOrders: Array.isArray(d.openOrders) ? d.openOrders.length : 0,
       total:
         (d.products?.length || 0) +
         (d.customers?.length || 0) +
         (d.sales?.length || 0) +
         (d.payments?.length || 0) +
         (d.purchases?.length || 0) +
-        (d.expenses?.length || 0),
+        (d.expenses?.length || 0) +
+        (Array.isArray(d.openOrders) ? d.openOrders.length : 0),
     };
 
     return {
@@ -405,13 +436,16 @@ class BackupService {
         purchases: d.purchases?.length || 0,
         inventoryMovements: d.inventoryMovements?.length || 0,
         expenses: d.expenses?.length || 0,
+        openOrders: d.openOrders?.length || 0,
+        openOrderItems: d.openOrderItems?.length || 0,
         total:
           (d.products?.length || 0) +
           (d.customers?.length || 0) +
           (d.sales?.length || 0) +
           (d.payments?.length || 0) +
           (d.purchases?.length || 0) +
-          (d.expenses?.length || 0),
+          (d.expenses?.length || 0) +
+          (d.openOrders?.length || 0),
       };
 
       return {

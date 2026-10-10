@@ -30,7 +30,7 @@ export function getOrCreateDeviceId(): string {
 
 export function getDeviceLabel(): string {
   if (typeof navigator === 'undefined') return 'Web Device';
-  const ua = navigator.userAgent;
+  const ua = (navigator && typeof navigator.userAgent === 'string') ? navigator.userAgent : '';
   let os = 'Device';
   if (ua.includes('Android')) os = 'Android Phone';
   else if (ua.includes('iPhone')) os = 'iPhone';
@@ -45,7 +45,7 @@ export function getDeviceLabel(): string {
   else if (ua.includes('Firefox')) browser = 'Firefox';
   else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
 
-  const isStandalone = typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches;
+  const isStandalone = typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(display-mode: standalone)').matches;
   return isStandalone ? `${os} App (PWA)` : `${os} · ${browser}`;
 }
 
