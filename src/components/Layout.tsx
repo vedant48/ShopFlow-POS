@@ -20,7 +20,7 @@ export const Layout: React.FC<LayoutProps> = ({
   cartCount = 0,
 }) => {
   const desktopTabs: { id: NavTab; label: string; icon: React.ElementType }[] = [
-    { id: 'home', label: 'Quick Sale POS', icon: ShoppingBag },
+    { id: 'home', label: 'Quick Sale', icon: ShoppingBag },
     { id: 'inventory', label: 'Inventory', icon: Package },
     { id: 'customers', label: 'Customers & Udhaar', icon: Users },
     { id: 'sales', label: 'Sales History', icon: Receipt },

@@ -357,7 +357,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
   ]);
 
   return (
-    <div className="space-y-4 pb-32 lg:pb-12">
+    <div className="space-y-2.5 sm:space-y-4 pb-32 lg:pb-12">
       {/* Non-blocking stock protection & UNDO toast */}
       <SaleToast
         sale={activeSaleToast}
@@ -373,7 +373,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
           <span className="text-xs font-semibold text-[#86868b] uppercase tracking-wider block">
             {greeting}
           </span>
-          <h1 className="text-xl sm:text-2xl font-bold text-[#1d1d1f] tracking-tight apple-tight">
+          <h1 className="text-lg sm:text-2xl font-bold text-[#1d1d1f] tracking-tight apple-tight">
             {user?.name || 'Raj Kumar'}
           </h1>
         </div>
@@ -381,7 +381,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
         <button
           type="button"
           onClick={() => setIsExpenseModalOpen(true)}
-          className="px-3.5 py-1.5 bg-white hover:bg-[#f5f5f7] text-[#1d1d1f] border border-[#e5e5ea] font-semibold text-xs rounded-full flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs active:scale-95"
+          className="px-3 py-1 sm:px-3.5 sm:py-1.5 bg-white hover:bg-[#f5f5f7] text-[#1d1d1f] border border-[#e5e5ea] font-semibold text-xs rounded-full flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs active:scale-95"
         >
           <Plus className="w-3.5 h-3.5 stroke-[2.2]" />
           <span>Expense</span>
@@ -389,17 +389,17 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
       </div>
 
       {/* 1 & 2. Today's Summary & Money Breakdown */}
-      <div className="bg-white rounded-2xl border border-[#e5e5ea] p-4 sm:p-5 shadow-2xs space-y-3">
+      <div className="bg-white rounded-2xl border border-[#e5e5ea] p-3 sm:p-5 shadow-2xs space-y-2 sm:space-y-3">
         {/* Primary Metric: Today's Sales */}
         <div className="flex items-start justify-between">
           <div>
             <span className="text-xs font-semibold text-[#86868b] uppercase tracking-wider block">
               Today's Sales
             </span>
-            <div className="text-2xl sm:text-4xl font-bold text-[#1d1d1f] tracking-tight mt-0.5 apple-tight">
+            <div className="text-xl sm:text-4xl font-bold text-[#1d1d1f] tracking-tight mt-0.5 apple-tight">
               {formatCurrency(stats.todayRevenue)}
             </div>
-            <div className="text-xs text-[#86868b] font-normal mt-0.5">
+            <div className="text-[11px] sm:text-xs text-[#86868b] font-normal mt-0.5">
               {stats.todayItemsSold} items sold · {stats.transactionCount} sales
             </div>
           </div>
@@ -408,7 +408,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
             <span className="text-[10px] font-semibold text-emerald-700 uppercase tracking-wider block">
               Est. Profit
             </span>
-            <span className="text-base sm:text-xl font-bold text-emerald-600 block apple-tight">
+            <span className="text-sm sm:text-xl font-bold text-emerald-600 block apple-tight">
               {formatCurrency(stats.todayEstimatedProfit)}
             </span>
 
@@ -515,9 +515,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
       )}
 
       {/* 6. Quick Sale Remains Primary (Desktop 2-column layout, Mobile stacked) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 items-start">
         {/* Left Column: Quick Sale Catalog (Immediate access) */}
-        <div className="lg:col-span-7 xl:col-span-8 space-y-4">
+        <div className="lg:col-span-7 xl:col-span-8 space-y-2.5 sm:space-y-4">
           {/* Section 12: Recovery flow for new device with no local data */}
           {products.length === 0 && !productsLoading && (
             <div className="bg-white border border-[#e5e5ea] rounded-2xl p-4 shadow-2xs">
@@ -547,7 +547,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
             </div>
           )}
 
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {/* Visual Banner when Editing Open Order */}
             {activeEditingOrder && (
               <div className="p-3.5 bg-amber-500 text-white rounded-2xl shadow-sm flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2">
