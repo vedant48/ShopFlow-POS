@@ -186,6 +186,13 @@
 
 /* Quick Sale workspace accents */
 .quick-sale-surface {
+  --quick-ink: #172033;
+  --quick-muted: #7a8494;
+  --quick-blue: #1769d2;
+  --quick-line: #e6eaf0;
+}
+
+.quick-sale-surface {
   position: relative;
 }
 
@@ -201,6 +208,50 @@
   box-shadow: 0 5px 12px rgba(0, 102, 204, 0.22);
   font-size: 0.75rem;
   font-weight: 800;
+}
+
+.quick-filter-section {
+  padding-top: 0.25rem;
+}
+
+.quick-filter-label {
+  color: var(--quick-muted);
+}
+
+.quick-category-chip,
+.quick-brand-chip {
+  border: 1px solid var(--quick-line);
+  background: #ffffff;
+  color: var(--quick-ink);
+  box-shadow: 0 1px 2px rgba(23, 32, 51, 0.03);
+}
+
+.quick-category-chip:hover,
+.quick-brand-chip:hover {
+  border-color: #b9cbe4;
+  transform: translateY(-1px);
+}
+
+.quick-product-card {
+  border-color: var(--quick-line);
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(23, 32, 51, 0.03), 0 8px 22px rgba(23, 32, 51, 0.035);
+}
+
+.quick-product-card:hover {
+  border-color: #b9cbe4;
+  box-shadow: 0 8px 24px rgba(23, 32, 51, 0.09);
+  transform: translateY(-2px);
+}
+
+.quick-brand-label {
+  color: var(--quick-blue);
+  background: #edf4fd;
+}
+
+.quick-products-section {
+  border-top: 1px solid var(--quick-line);
+  padding-top: 0.75rem;
 }
 
 .quick-sale-surface input::placeholder {

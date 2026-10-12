@@ -315,7 +315,7 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
     return (
       <div
         key={product.id}
-        className={`relative flex flex-col justify-between p-2.5 sm:p-3 rounded-2xl border text-left transition-all duration-150 select-none shadow-[0_2px_8px_rgba(26,44,80,0.04)] group min-h-[112px] sm:min-h-[124px] ${
+        className={`quick-product-card relative flex flex-col justify-between p-3 sm:p-3.5 rounded-2xl border text-left transition-all duration-150 select-none group min-h-[126px] sm:min-h-[138px] ${
           isOutOfStock
             ? 'bg-[#f5f5f7] border-dashed border-[#d2d2d7] opacity-60'
             : inCartCount > 0
@@ -340,11 +340,11 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
         <div className="relative z-10 flex items-start justify-between gap-1 pointer-events-none mb-0.5">
           <div className="flex items-center gap-1 min-w-0 pr-1">
             {productBrand ? (
-              <span className="text-[9px] sm:text-[10px] font-semibold text-[#0066cc] bg-[#0066cc]/10 px-1.5 py-0.2 rounded-full truncate max-w-[85px] leading-tight">
+              <span className="quick-brand-label text-[9px] sm:text-[10px] font-semibold px-2 py-1 rounded-md truncate max-w-[100px] leading-tight">
                 {productBrand.name}
               </span>
             ) : hasMultipleVariants ? (
-              <span className="text-[9px] sm:text-[10px] font-semibold text-[#0066cc] bg-[#0066cc]/10 px-1.5 py-0.2 rounded-full leading-tight">
+              <span className="quick-brand-label text-[9px] sm:text-[10px] font-semibold px-2 py-1 rounded-md leading-tight">
                 {variants.length} options
               </span>
             ) : (
@@ -665,7 +665,7 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
           )}
 
           {/* B. CATEGORY SWITCHER (Horizontal scrollable chips - Reference visual design) */}
-          <div className="space-y-1 sm:space-y-1.5">
+          <div className="quick-filter-section space-y-1.5 sm:space-y-2">
             <div className="flex items-center justify-between px-0.5">
               <span className="text-[11px] sm:text-xs font-semibold text-[#86868b] uppercase tracking-wider">
                 Categories
@@ -677,7 +677,7 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
 
             <div
               {...categoryScroll.containerProps}
-              className="quick-horizontal-scroll flex items-center gap-1.5 overflow-x-auto pb-0.5 pt-0.5 cursor-grab active:cursor-grabbing select-none -mx-1 px-1"
+              className="quick-horizontal-scroll flex items-center gap-2 overflow-x-auto pb-1 pt-1 cursor-grab active:cursor-grabbing select-none -mx-1 px-1"
             >
               {/* "All" Category Chip */}
               <button
@@ -718,7 +718,7 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
                       setSelectedCategoryId(isSelected ? null : cat.id);
                       setSelectedBrandId(null);
                     }}
-                    className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0 active:scale-95 ${
+className={`quick-category-chip flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] sm:text-xs font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0 active:scale-95 ${
                       isSelected
                         ? 'bg-[#0066cc] text-white shadow-xs'
                         : 'bg-white text-[#1d1d1f] border border-[#e5e5ea] hover:bg-[#f5f5f7]'
@@ -745,16 +745,16 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
           {selectedCategoryId && categoryBrands.length > 0 && (
             <div
               {...brandScroll.containerProps}
-              className="quick-horizontal-scroll flex items-center gap-1 overflow-x-auto pb-0.5 pt-0 cursor-grab active:cursor-grabbing select-none text-[11px] -mx-1 px-1 animate-in fade-in duration-150"
+              className="quick-horizontal-scroll flex items-center gap-2 overflow-x-auto pb-1 pt-1 cursor-grab active:cursor-grabbing select-none text-[11px] -mx-1 px-1 animate-in fade-in duration-150"
             >
-              <span className="text-[10px] font-semibold text-[#86868b] uppercase tracking-wider shrink-0 mr-0.5">
+              <span className="quick-filter-label text-[10px] font-bold uppercase tracking-[0.16em] shrink-0 mr-0.5">
                 Brands:
               </span>
 
               <button
                 type="button"
                 onClick={() => setSelectedBrandId(null)}
-                className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold transition-all cursor-pointer shrink-0 active:scale-95 ${
+                className={`quick-brand-chip px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all cursor-pointer shrink-0 active:scale-95 ${
                   selectedBrandId === null
                     ? 'bg-[#1d1d1f] text-white shadow-2xs'
                     : 'bg-white text-[#6e6e73] border border-[#e5e5ea] hover:text-[#1d1d1f]'
@@ -795,7 +795,7 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
           )}
 
           {/* D. PRODUCT GRID */}
-          <div className="space-y-1.5 sm:space-y-2">
+          <div className="quick-products-section space-y-2 sm:space-y-2.5">
             <div className="flex items-center justify-between px-0.5">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-[11px] sm:text-xs font-bold text-[#1d1d1f] uppercase tracking-wider">
