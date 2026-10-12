@@ -357,7 +357,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
   ]);
 
   return (
-    <div className="space-y-4 pb-20 lg:pb-12">
+    <div className="space-y-4 pb-32 lg:pb-12">
       {/* Non-blocking stock protection & UNDO toast */}
       <SaleToast
         sale={activeSaleToast}
@@ -573,29 +573,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
               </div>
             )}
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <h2 className="text-base sm:text-lg font-bold text-[#1d1d1f] tracking-tight apple-tight">
-                  Quick Sale
-                </h2>
-
-                {/* Open Orders prominent counter badge */}
-                <button
-                  type="button"
-                  onClick={() => setIsOpenOrdersModalOpen(true)}
-                  className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200/90 text-amber-900 font-semibold text-xs rounded-full flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95"
-                >
-                  <Clock className="w-3.5 h-3.5 text-amber-600" />
-                  <span>OPEN ORDERS</span>
-                  {openOrdersCount > 0 && (
-                    <span className="w-5 h-5 rounded-full bg-amber-500 text-white text-[11px] font-bold flex items-center justify-center">
-                      {openOrdersCount}
-                    </span>
-                  )}
-                </button>
-              </div>
-            </div>
-
             {productsLoading ? (
               <div className="p-8 text-center text-[#86868b] font-normal">
                 Loading products...
@@ -605,6 +582,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
                 products={products}
                 cart={cart}
                 onAddToCart={handleAddToCart}
+                openOrdersCount={openOrdersCount}
+                onOpenOrders={() => setIsOpenOrdersModalOpen(true)}
               />
             )}
           </div>
