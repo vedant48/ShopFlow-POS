@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useAuth } from '../auth/useAuth';
 import { useProducts, useCustomers, useDashboardStats, useOpenOrders } from '../hooks/useShopData';
 import { useCart } from '../hooks/useCart';
 import { QuickSaleGrid } from '../features/sales/QuickSaleGrid';
@@ -46,6 +47,7 @@ interface HomePageProps {
 }
 
 export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
+  const { user } = useAuth();
   const { products, isLoading: productsLoading } = useProducts();
   const { customers } = useCustomers();
   const { stats } = useDashboardStats();
@@ -372,7 +374,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigateToTab }) => {
             {greeting}
           </span>
           <h1 className="text-xl sm:text-2xl font-bold text-[#1d1d1f] tracking-tight apple-tight">
-            ShopFlow
+            {user?.name || 'Raj Kumar'}
           </h1>
         </div>
 

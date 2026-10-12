@@ -141,8 +141,8 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
   // Hook for cached Most Selling (frequentlySold), Recently Sold, and Favorites
   const { frequentlySold, recentlySold, favorites, toggleFavorite } = useQuickItems(products);
 
-  // Quick section view toggle between Most Selling & Recently Sold
-  const [quickSectionTab, setQuickSectionTab] = useState<'frequent' | 'recent'>('frequent');
+  // Quick section view toggle between Most Selling, Recently Sold & Favorites
+  const [quickSectionTab, setQuickSectionTab] = useState<'frequent' | 'recent' | 'favorites'>('frequent');
 
   // Lookups for fast category and brand matching
   const categoryMap = useMemo(() => {
@@ -408,11 +408,18 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
   };
 
   // Quick horizontal items list (for Most Selling, Recent, Favorites)
-  const currentQuickItems = quickSectionTab === 'frequent' ? frequentlySold : recentlySold;
+  const currentQuickItems =
+    quickSectionTab === 'frequent'
+      ? frequentlySold
+      : quickSectionTab === 'recent'
+      ? recentlySold
+      : favorites;
+
+  const hasAnyQuickItems =
+    frequentlySold.length > 0 || recentlySold.length > 0 || favorites.length > 0;
 
   // Horizontal scroll controllers for the quick option rows
   const quickScroll = useHorizontalScrollRow(`${quickSectionTab}-${currentQuickItems.length}`);
-  const favScroll = useHorizontalScrollRow(`${favorites.length}`);
 
   return (
     <div className="space-y-3.5">
@@ -476,15 +483,15 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
           {/* A. If at Root View: Show Most Selling, Favorites, and Categories Grid */}
           {!selectedCategoryId && (
             <>
-              {/* ⭐ MOST SELLING / RECENT Horizontal Quick Bar (Section 20 & 22) */}
-              {currentQuickItems.length > 0 && (
+              {/* ⭐ MOST SELLING / RECENT / FAVORITES Horizontal Quick Bar (Section 20, 21, 22) */}
+              {hasAnyQuickItems && (
                 <div className="space-y-2 bg-white p-2.5 rounded-2xl border border-[#e5e5ea] shadow-2xs">
                   <div className="flex items-center justify-between px-1">
-                    <div className="flex items-center gap-1 p-0.5 bg-[#f5f5f7] rounded-full border border-[#e5e5ea]">
+                    <div className="flex items-center gap-1 p-0.5 bg-[#f5f5f7] rounded-full border border-[#e5e5ea] overflow-x-auto max-w-full">
                       <button
                         type="button"
                         onClick={() => setQuickSectionTab('frequent')}
-                        className={`flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full transition-all cursor-pointer ${
+                        className={`flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full transition-all cursor-pointer shrink-0 ${
                           quickSectionTab === 'frequent'
                             ? 'bg-white text-[#0066cc] shadow-2xs'
                             : 'text-[#6e6e73] hover:text-[#1d1d1f]'
@@ -497,7 +504,7 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
                       <button
                         type="button"
                         onClick={() => setQuickSectionTab('recent')}
-                        className={`flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full transition-all cursor-pointer ${
+                        className={`flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full transition-all cursor-pointer shrink-0 ${
                           quickSectionTab === 'recent'
                             ? 'bg-white text-[#0066cc] shadow-2xs'
                             : 'text-[#6e6e73] hover:text-[#1d1d1f]'
@@ -506,115 +513,99 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
                         <Clock className="w-3 h-3 stroke-[2.2]" />
                         <span>Recently Sold</span>
                       </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setQuickSectionTab('favorites')}
+                        className={`flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full transition-all cursor-pointer shrink-0 ${
+                          quickSectionTab === 'favorites'
+                            ? 'bg-white text-amber-600 shadow-2xs'
+                            : 'text-[#6e6e73] hover:text-[#1d1d1f]'
+                        }`}
+                      >
+                        <Star className={`w-3 h-3 ${quickSectionTab === 'favorites' ? 'fill-amber-500 text-amber-500' : 'stroke-[2.2]'}`} />
+                        <span>Favorites</span>
+                        {favorites.length > 0 && (
+                          <span
+                            className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold leading-none ${
+                              quickSectionTab === 'favorites' ? 'bg-amber-100 text-amber-800' : 'bg-[#e5e5ea] text-[#6e6e73]'
+                            }`}
+                          >
+                            {favorites.length}
+                          </span>
+                        )}
+                      </button>
                     </div>
                   </div>
 
-                  {/* Horizontal chips */}
-                  <div
-                    {...quickScroll.containerProps}
-                    className="quick-horizontal-scroll flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 cursor-grab active:cursor-grabbing select-none"
-                  >
-                    {currentQuickItems.map((prod) => {
-                      const inCart = cartQuantityMap.get(prod.id) || 0;
-                      const isOut = prod.stock <= 0;
+                  {/* Horizontal chips or friendly empty notice */}
+                  {currentQuickItems.length > 0 ? (
+                    <div
+                      {...quickScroll.containerProps}
+                      className="quick-horizontal-scroll flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 cursor-grab active:cursor-grabbing select-none"
+                    >
+                      {currentQuickItems.map((prod) => {
+                        const inCart = cartQuantityMap.get(prod.id) || 0;
+                        const isOut = prod.stock <= 0;
 
-                      return (
-                        <button
-                          key={`quick-${prod.id}`}
-                          type="button"
-                          disabled={isOut}
-                          onClick={() => {
-                            if (!isOut) handleProductClick(prod);
-                          }}
-                          className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-left shrink-0 transition-all select-none shadow-2xs active:scale-95 cursor-pointer ${
-                            isOut
-                              ? 'bg-[#f5f5f7] border-dashed border-[#d2d2d7] opacity-60 cursor-not-allowed'
-                              : inCart > 0
-                              ? 'bg-[#f0f7ff] border-[#0066cc] ring-1 ring-[#0066cc]/30'
-                              : 'bg-white border-[#e5e5ea] hover:border-[#b6d7ff]'
-                          }`}
-                        >
-                          <div className="min-w-0 pr-1">
-                            <span className="text-xs font-semibold text-[#1d1d1f] block leading-tight truncate max-w-[110px] apple-tight">
-                              {prod.name}
-                            </span>
-                            <span className="text-[11px] font-bold text-[#0066cc] block leading-none mt-0.5">
-                              {formatCurrency(prod.sellingPrice)}
-                            </span>
-                          </div>
+                        return (
+                          <button
+                            key={`quick-${prod.id}`}
+                            type="button"
+                            disabled={isOut}
+                            onClick={() => {
+                              if (!isOut) handleProductClick(prod);
+                            }}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-left shrink-0 transition-all select-none shadow-2xs active:scale-95 cursor-pointer ${
+                              isOut
+                                ? 'bg-[#f5f5f7] border-dashed border-[#d2d2d7] opacity-60 cursor-not-allowed'
+                                : inCart > 0
+                                ? 'bg-[#f0f7ff] border-[#0066cc] ring-1 ring-[#0066cc]/30'
+                                : quickSectionTab === 'favorites'
+                                ? 'bg-white border-[#e5e5ea] hover:border-amber-300'
+                                : 'bg-white border-[#e5e5ea] hover:border-[#b6d7ff]'
+                            }`}
+                          >
+                            <div className="min-w-0 pr-1">
+                              <span className="text-xs font-semibold text-[#1d1d1f] block leading-tight truncate max-w-[110px] apple-tight">
+                                {prod.name}
+                              </span>
+                              <span className="text-[11px] font-bold text-[#0066cc] block leading-none mt-0.5">
+                                {formatCurrency(prod.sellingPrice)}
+                              </span>
+                            </div>
 
-                          {inCart > 0 && !isOut ? (
-                            <span className="bg-[#0066cc] text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-full shadow-2xs shrink-0">
-                              ×{inCart}
-                            </span>
-                          ) : (
-                            <span className="w-4 h-4 rounded-full bg-[#f5f5f7] text-[#86868b] font-semibold text-xs flex items-center justify-center shrink-0">
-                              +
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* ❤️ FAVORITES Quick Bar (Section 21) */}
-              {favorites.length > 0 && (
-                <div className="space-y-1.5 bg-[#fffbeb]/70 p-2.5 rounded-2xl border border-[#fef3c7] shadow-2xs">
-                  <div className="flex items-center justify-between px-1">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-[#92400e]">
-                      <span>❤️</span>
-                      <span>Favorites</span>
+                            {inCart > 0 && !isOut ? (
+                              <span className="bg-[#0066cc] text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-full shadow-2xs shrink-0">
+                                ×{inCart}
+                              </span>
+                            ) : (
+                              <span
+                                className={`w-4 h-4 rounded-full font-semibold text-xs flex items-center justify-center shrink-0 ${
+                                  quickSectionTab === 'favorites'
+                                    ? 'bg-amber-100/70 text-amber-800'
+                                    : 'bg-[#f5f5f7] text-[#86868b]'
+                                }`}
+                              >
+                                +
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
-                  </div>
-
-                  <div
-                    {...favScroll.containerProps}
-                    className="quick-horizontal-scroll flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 cursor-grab active:cursor-grabbing select-none"
-                  >
-                    {favorites.map((prod) => {
-                      const inCart = cartQuantityMap.get(prod.id) || 0;
-                      const isOut = prod.stock <= 0;
-
-                      return (
-                        <button
-                          key={`fav-${prod.id}`}
-                          type="button"
-                          disabled={isOut}
-                          onClick={() => {
-                            if (!isOut) handleProductClick(prod);
-                          }}
-                          className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-left shrink-0 transition-all select-none shadow-2xs active:scale-95 cursor-pointer ${
-                            isOut
-                              ? 'bg-[#f5f5f7] border-dashed border-[#d2d2d7] opacity-60 cursor-not-allowed'
-                              : inCart > 0
-                              ? 'bg-[#f0f7ff] border-[#0066cc] ring-1 ring-[#0066cc]/30'
-                              : 'bg-white border-[#e5e5ea] hover:border-amber-300'
-                          }`}
-                        >
-                          <div className="min-w-0 pr-1">
-                            <span className="text-xs font-semibold text-[#1d1d1f] block leading-tight truncate max-w-[110px] apple-tight">
-                              {prod.name}
-                            </span>
-                            <span className="text-[11px] font-bold text-[#0066cc] block leading-none mt-0.5">
-                              {formatCurrency(prod.sellingPrice)}
-                            </span>
-                          </div>
-
-                          {inCart > 0 && !isOut ? (
-                            <span className="bg-[#0066cc] text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-full shadow-2xs shrink-0">
-                              ×{inCart}
-                            </span>
-                          ) : (
-                            <span className="w-4 h-4 rounded-full bg-amber-100/70 text-amber-800 font-semibold text-xs flex items-center justify-center shrink-0">
-                              +
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  ) : (
+                    <div className="py-2.5 px-3 text-center text-xs text-[#86868b] flex items-center justify-center gap-1.5 bg-[#f5f5f7]/60 rounded-xl">
+                      {quickSectionTab === 'favorites' ? (
+                        <>
+                          <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0" />
+                          <span>No favorite products yet. Tap the star icon on any product to add it here.</span>
+                        </>
+                      ) : (
+                        <span>No items found in this section yet.</span>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
