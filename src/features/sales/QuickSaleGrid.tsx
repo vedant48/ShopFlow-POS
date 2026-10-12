@@ -9,14 +9,22 @@ import { getCategoryEmoji } from '../../constants/categoryIcons';
 import { VariantSelectionModal } from './VariantSelectionModal';
 
 /**
- * Hook to provide smooth horizontal scrolling with mouse wheel and drag support
+ * Hook to provide smooth horizontal scrolling with:
+ * 1. Mobile touch swipe (enabled via CSS quick-horizontal-scroll with touch-action: pan-x pan-y)
+ * 2. Desktop mouse wheel: translates vertical wheel deltaY to horizontal scroll
+ * 3. Desktop mouse drag: allows click-and-drag panning without accidentally triggering item clicks
  */
 function useHorizontalScrollRow(dependencyKey?: string | number) {
   const ref = useRef<HTMLDivElement | null>(null);
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const scrollStart = useRef(0);
+  const hasDragged = useRef(false);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    el.scrollLeft = 0;
 
     const onWheel = (e: WheelEvent) => {
       if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
@@ -36,9 +44,56 @@ function useHorizontalScrollRow(dependencyKey?: string | number) {
     return () => el.removeEventListener('wheel', onWheel);
   }, [dependencyKey]);
 
+  useEffect(() => {
+    const onGlobalMouseMove = (e: MouseEvent) => {
+      if (!isDragging.current || !ref.current) return;
+      const diff = e.pageX - startX.current;
+      if (Math.abs(diff) > 4) {
+        hasDragged.current = true;
+        e.preventDefault();
+      }
+      ref.current.scrollLeft = scrollStart.current - diff;
+    };
+
+    const onGlobalMouseUp = () => {
+      if (isDragging.current) {
+        isDragging.current = false;
+        setTimeout(() => {
+          hasDragged.current = false;
+        }, 50);
+      }
+    };
+
+    window.addEventListener('mousemove', onGlobalMouseMove);
+    window.addEventListener('mouseup', onGlobalMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', onGlobalMouseMove);
+      window.removeEventListener('mouseup', onGlobalMouseUp);
+    };
+  }, []);
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0 || !ref.current) return;
+    isDragging.current = true;
+    hasDragged.current = false;
+    startX.current = e.pageX;
+    scrollStart.current = ref.current.scrollLeft;
+  };
+
+  const onClickCapture = (e: React.MouseEvent) => {
+    if (hasDragged.current) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
   return {
+    ref,
     containerProps: {
       ref,
+      onMouseDown,
+      onClickCapture,
     },
   };
 }
@@ -379,8 +434,10 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
   const hasAnyQuickItems =
     frequentlySold.length > 0 || recentlySold.length > 0 || favorites.length > 0;
 
-  // Horizontal scroll controllers for the quick option rows
+  // Horizontal scroll controllers for the quick option rows, category chips, and brand chips
   const quickScroll = useHorizontalScrollRow(`${quickSectionTab}-${currentQuickItems.length}`);
+  const categoryScroll = useHorizontalScrollRow(`categories-${categories.length}`);
+  const brandScroll = useHorizontalScrollRow(`brands-${selectedCategoryId}-${categoryBrands.length}`);
 
   return (
     <div className="space-y-3 sm:space-y-3.5">
@@ -478,7 +535,7 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
           {hasAnyQuickItems && (
             <div className="space-y-2 bg-white p-2.5 rounded-2xl border border-[#e5e5ea] shadow-2xs">
               <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-1 p-0.5 bg-[#f5f5f7] rounded-full border border-[#e5e5ea] overflow-x-auto max-w-full">
+                <div className="quick-horizontal-scroll flex items-center gap-1 p-0.5 bg-[#f5f5f7] rounded-full border border-[#e5e5ea] overflow-x-auto max-w-full">
                   <button
                     type="button"
                     onClick={() => setQuickSectionTab('frequent')}
@@ -611,7 +668,10 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
               </span>
             </div>
 
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 no-scrollbar select-none -mx-1 px-1">
+            <div
+              {...categoryScroll.containerProps}
+              className="quick-horizontal-scroll flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 cursor-grab active:cursor-grabbing select-none -mx-1 px-1"
+            >
               {/* "All" Category Chip */}
               <button
                 type="button"
@@ -676,7 +736,10 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
 
           {/* C. BRAND FILTER STRIP (Rendered when active category has brands) */}
           {selectedCategoryId && categoryBrands.length > 0 && (
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 select-none text-xs -mx-1 px-1 animate-in fade-in duration-150">
+            <div
+              {...brandScroll.containerProps}
+              className="quick-horizontal-scroll flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 cursor-grab active:cursor-grabbing select-none text-xs -mx-1 px-1 animate-in fade-in duration-150"
+            >
               <span className="text-[11px] font-semibold text-[#86868b] uppercase tracking-wider shrink-0 mr-0.5">
                 Brands:
               </span>
