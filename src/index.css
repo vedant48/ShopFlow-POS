@@ -184,3 +184,30 @@
   outline-offset: 2px;
 }
 
+/* Quick Sale workspace accents */
+.quick-sale-surface {
+  position: relative;
+}
+
+.quick-sale-kicker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.75rem;
+  color: #ffffff;
+  background: linear-gradient(145deg, #1478e8, #0057b8);
+  box-shadow: 0 5px 12px rgba(0, 102, 204, 0.22);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.quick-sale-surface input::placeholder {
+  transition: color 0.15s ease;
+}
+
+.quick-sale-surface input:focus::placeholder {
+  color: #b0b6c2;
+}
+

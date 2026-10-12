@@ -315,7 +315,7 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
     return (
       <div
         key={product.id}
-        className={`relative flex flex-col justify-between p-2 sm:p-2.5 rounded-xl sm:rounded-2xl border text-left transition-all duration-150 select-none shadow-2xs group min-h-[96px] sm:min-h-[104px] ${
+        className={`relative flex flex-col justify-between p-2.5 sm:p-3 rounded-2xl border text-left transition-all duration-150 select-none shadow-[0_2px_8px_rgba(26,44,80,0.04)] group min-h-[112px] sm:min-h-[124px] ${
           isOutOfStock
             ? 'bg-[#f5f5f7] border-dashed border-[#d2d2d7] opacity-60'
             : inCartCount > 0
@@ -442,16 +442,21 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
   const brandScroll = useHorizontalScrollRow(`brands-${selectedCategoryId}-${categoryBrands.length}`);
 
   return (
-    <div className="space-y-2 sm:space-y-3">
+<section className="quick-sale-surface space-y-2.5 sm:space-y-4" aria-labelledby="quick-sale-heading">
       {/* 1. Header with Title & Open Orders Badge */}
-      <div className="flex items-center justify-between gap-2 px-0.5">
+      <div className="flex items-center justify-between gap-2 px-1">
         <div className="flex items-center gap-2">
-          <h2 className="text-base sm:text-lg font-bold text-[#1d1d1f] tracking-tight apple-tight">
-            Quick Sale
-          </h2>
-          <span className="text-[11px] font-medium text-[#86868b] hidden xs:inline">
-            ({totalActiveProductsCount} products)
-          </span>
+          <div className="flex items-center gap-2.5">
+            <span className="quick-sale-kicker" aria-hidden="true">1</span>
+            <div>
+              <h2 id="quick-sale-heading" className="text-lg sm:text-xl font-bold text-[#1d1d1f] tracking-tight apple-tight">
+                Quick Sale
+              </h2>
+              <span className="text-[10px] sm:text-[11px] font-medium text-[#86868b]">
+                {totalActiveProductsCount} products ready to sell
+              </span>
+            </div>
+          </div>
         </div>
 
         {onOpenOrders && (
@@ -473,14 +478,14 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
 
       {/* 2. Fast Search Field with Offline Immediate Filtering */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#86868b] pointer-events-none" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#0066cc] pointer-events-none" />
         <input
           ref={searchInputRef}
           type="text"
           placeholder="Search products, brands, or categories (press '/' to focus)..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full h-9.5 sm:h-10 pl-9 pr-8 bg-white border border-[#e5e5ea] rounded-full text-xs sm:text-sm font-medium text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#0071e3] transition-all shadow-2xs apple-focus"
+          className="w-full h-11 sm:h-12 pl-10 pr-10 bg-white border border-[#dfe3ea] rounded-2xl text-sm sm:text-[15px] font-medium text-[#1d1d1f] placeholder:text-[#9297a3] focus:outline-none focus:ring-4 focus:ring-[#0066cc]/10 focus:border-[#0066cc]/50 transition-all shadow-[0_4px_16px_rgba(26,44,80,0.05)] apple-focus"
         />
         {searchTerm && (
           <button
@@ -821,7 +826,7 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
             </div>
 
             {displayedProducts.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-2.5">
+<div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
                 {displayedProducts.map((product) => renderProductCard(product))}
               </div>
             ) : (
@@ -852,6 +857,6 @@ export const QuickSaleGrid: React.FC<QuickSaleGridProps> = ({
           onAddToCart(product, variant);
         }}
       />
-    </div>
+    </section>
   );
 };
